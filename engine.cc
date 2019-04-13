@@ -33,8 +33,8 @@ img::EasyImage introBlocks(const ini::Configuration &configuration) {
 	Color white = colorWhite;
 	Color black = colorBlack;
 	bool invertColors = configuration["BlockProperties"]["invertColors"];
-	int blockWidth = static_cast<int>(round(width / nrXBlocks));
-	int blockHeight = static_cast<int>(round(height / nrYBlocks));
+	int blockWidth = static_cast<int>(round(double(width) / nrXBlocks));
+	int blockHeight = static_cast<int>(round(double(width) / nrYBlocks));
 	for (int x = 0; x < width; x++) {
 		for (int y = 0; y < height; ++y) {
 			int xCo = x / blockWidth;
@@ -183,23 +183,38 @@ img::EasyImage draw3D(const ini::Configuration &configuration, const render type
 		} else if (figureType == "FractalCube") {
 			const int nrIterations = configuration["Figure" + std::to_string(i)]["nrIterations"];
 			const double fractalScale = configuration["Figure" + std::to_string(i)]["fractalScale"];
-			figures += Figures::fractal(Figure::cube(), nrIterations, fractalScale, color);
+			Figure temp = Figure::cube();
+			temp *= scaleFigure(scale) * rotateX(x) * rotateY(y) * rotateZ(z) * translate(center);
+			temp.setColor(color);
+			figures += Figures::fractal(temp, nrIterations, fractalScale);
 		} else if (figureType == "FractalTetrahedron") {
 			const int nrIterations = configuration["Figure" + std::to_string(i)]["nrIterations"];
 			const double fractalScale = configuration["Figure" + std::to_string(i)]["fractalScale"];
-			figures += Figures::fractal(Figure::tetrahedron(), nrIterations, fractalScale, color);
+			Figure temp = Figure::tetrahedron();
+			temp *= scaleFigure(scale) * rotateX(x) * rotateY(y) * rotateZ(z) * translate(center);
+			temp.setColor(color);
+			figures += Figures::fractal(temp, nrIterations, fractalScale);
 		} else if (figureType == "FractalOctahedron") {
 			const int nrIterations = configuration["Figure" + std::to_string(i)]["nrIterations"];
 			const double fractalScale = configuration["Figure" + std::to_string(i)]["fractalScale"];
-			figures += Figures::fractal(Figure::octahedron(), nrIterations, fractalScale, color);
+			Figure temp = Figure::octahedron();
+			temp *= scaleFigure(scale) * rotateX(x) * rotateY(y) * rotateZ(z) * translate(center);
+			temp.setColor(color);
+			figures += Figures::fractal(temp, nrIterations, fractalScale);
 		} else if (figureType == "FractalIcosahedron") {
 			const int nrIterations = configuration["Figure" + std::to_string(i)]["nrIterations"];
 			const double fractalScale = configuration["Figure" + std::to_string(i)]["fractalScale"];
-			figures += Figures::fractal(Figure::icosahedron(), nrIterations, fractalScale, color);
+			Figure temp = Figure::icosahedron();
+			temp *= scaleFigure(scale) * rotateX(x) * rotateY(y) * rotateZ(z) * translate(center);
+			temp.setColor(color);
+			figures += Figures::fractal(temp, nrIterations, fractalScale);
 		} else if (figureType == "FractalDodecahedron") {
 			const int nrIterations = configuration["Figure" + std::to_string(i)]["nrIterations"];
 			const double fractalScale = configuration["Figure" + std::to_string(i)]["fractalScale"];
-			figures += Figures::fractal(Figure::dodecahedron(), nrIterations, fractalScale, color);
+			Figure temp = Figure::dodecahedron();
+			temp *= scaleFigure(scale) * rotateX(x) * rotateY(y) * rotateZ(z) * translate(center);
+			temp.setColor(color);
+			figures += Figures::fractal(temp, nrIterations, fractalScale);
 		}
 		if (!figure.getPoints().empty()) {
 			figure *= scaleFigure(scale) * rotateX(x) * rotateY(y) * rotateZ(z) * translate(center);

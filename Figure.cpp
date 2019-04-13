@@ -482,9 +482,8 @@ void Figures::triangulate() {
 	}
 }
 
-Figures Figures::fractal(Figure &&figure, const int iter, const double scale, const Color& color) {
+Figures Figures::fractal(Figure &figure, int iter, double scale) {
 	Figures figs;
-	figure.setColor(color);
 	figs.addFigure(figure);
 	for (int i = 0; i < iter; i++) {
 		std::forward_list<Figure> newIt;

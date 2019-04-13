@@ -108,7 +108,7 @@ public:
 
 	img::EasyImage draw(unsigned int size, const Color &background) const;
 
-	static Figures fractal(Figure &&figure, int iter, double scale, const Color& color);
+	static Figures fractal(Figure &figure, int iter, double scale);
 };
 
 #endif //ENGINE_CMAKE_FIGURE_H
