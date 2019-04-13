@@ -6,3 +6,9 @@ cmake-build-debug/
 *.bmp
 
 *.o
+
+engine
+
+io fractals/core\.2255
+
+io fractals/core\.3040

@@ -182,15 +182,15 @@ img::EasyImage draw3D(const ini::Configuration &configuration, const render type
 			figure = lSystem3D;
 		} else if (figureType == "FractalCube") {
 			const int nrIterations = configuration["Figure" + std::to_string(i)]["nrIterations"];
-			const int fractalScale = configuration["Figure" + std::to_string(i)]["fractalScale"];
+			const double fractalScale = configuration["Figure" + std::to_string(i)]["fractalScale"];
 			figures += Figures::fractal(Figure::cube(), nrIterations, fractalScale, color);
 		} else if (figureType == "FractalTetrahedron") {
 			const int nrIterations = configuration["Figure" + std::to_string(i)]["nrIterations"];
-			const int fractalScale = configuration["Figure" + std::to_string(i)]["fractalScale"];
+			const double fractalScale = configuration["Figure" + std::to_string(i)]["fractalScale"];
 			figures += Figures::fractal(Figure::tetrahedron(), nrIterations, fractalScale, color);
 		} else if (figureType == "FractalOctahedron") {
 			const int nrIterations = configuration["Figure" + std::to_string(i)]["nrIterations"];
-			const int fractalScale = configuration["Figure" + std::to_string(i)]["fractalScale"];
+			const double fractalScale = configuration["Figure" + std::to_string(i)]["fractalScale"];
 			figures += Figures::fractal(Figure::octahedron(), nrIterations, fractalScale, color);
 		} else if (figureType == "FractalIcosahedron") {
 			const int nrIterations = configuration["Figure" + std::to_string(i)]["nrIterations"];
@@ -198,7 +198,7 @@ img::EasyImage draw3D(const ini::Configuration &configuration, const render type
 			figures += Figures::fractal(Figure::icosahedron(), nrIterations, fractalScale, color);
 		} else if (figureType == "FractalDodecahedron") {
 			const int nrIterations = configuration["Figure" + std::to_string(i)]["nrIterations"];
-			const int fractalScale = configuration["Figure" + std::to_string(i)]["fractalScale"];
+			const double fractalScale = configuration["Figure" + std::to_string(i)]["fractalScale"];
 			figures += Figures::fractal(Figure::dodecahedron(), nrIterations, fractalScale, color);
 		}
 		if (!figure.getPoints().empty()) {
