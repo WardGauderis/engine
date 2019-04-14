@@ -41,10 +41,13 @@ class Figure {
 	std::vector<Vector3D> points;
 	std::vector<Face> faces;
 	Color color;
+
+	static void sort(std::vector<Face *> &faces, int index);
+
 public:
 	Figure &operator*=(const Matrix &matrix);
 
-	Figure operator*(const Matrix& matrix) const;
+	Figure operator*(const Matrix &matrix) const;
 
 	const std::vector<Vector3D> &getPoints() const;
 
@@ -70,6 +73,8 @@ public:
 
 	static Figure icosahedron();
 
+	static Figure buckyball();
+
 	static Figure dodecahedron();
 
 	static Figure cylinder(int n, double height);
@@ -80,7 +85,7 @@ public:
 
 	static Figure Torus(double R, double r, int n, int m);
 
-	Figure(const LParser::LSystem3D& lSystem);
+	Figure(const LParser::LSystem3D &lSystem);
 
 	void triangulate();
 

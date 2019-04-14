@@ -154,6 +154,8 @@ img::EasyImage draw3D(const ini::Configuration &configuration, const render type
 			figure = Figure::octahedron();
 		} else if (figureType == "Icosahedron") {
 			figure = Figure::icosahedron();
+		} else if (figureType == "BuckyBall") {
+			figure = Figure::buckyball();
 		} else if (figureType == "Dodecahedron") {
 			figure = Figure::dodecahedron();
 		} else if (figureType == "Cylinder") {
@@ -208,6 +210,13 @@ img::EasyImage draw3D(const ini::Configuration &configuration, const render type
 			temp *= scaleFigure(scale) * rotateX(x) * rotateY(y) * rotateZ(z) * translate(center);
 			temp.setColor(color);
 			figures += Figures::fractal(temp, nrIterations, fractalScale);
+		} else if (figureType == "FractalBuckyBall") {
+			const int nrIterations = configuration["Figure" + std::to_string(i)]["nrIterations"];
+			const double fractalScale = configuration["Figure" + std::to_string(i)]["fractalScale"];
+			Figure temp = Figure::buckyball();
+			temp *= scaleFigure(scale) * rotateX(x) * rotateY(y) * rotateZ(z) * translate(center);
+			temp.setColor(color);
+			figures += Figures::fractal(temp, nrIterations, fractalScale);
 		} else if (figureType == "FractalDodecahedron") {
 			const int nrIterations = configuration["Figure" + std::to_string(i)]["nrIterations"];
 			const double fractalScale = configuration["Figure" + std::to_string(i)]["fractalScale"];
@@ -215,6 +224,12 @@ img::EasyImage draw3D(const ini::Configuration &configuration, const render type
 			temp *= scaleFigure(scale) * rotateX(x) * rotateY(y) * rotateZ(z) * translate(center);
 			temp.setColor(color);
 			figures += Figures::fractal(temp, nrIterations, fractalScale);
+		} else if (figureType == "MengerSponge") {
+			const int nrIterations = configuration["Figure" + std::to_string(i)]["nrIterations"];
+			Figure temp = Figure::cube();
+			temp *= scaleFigure(scale) * rotateX(x) * rotateY(y) * rotateZ(z) * translate(center);
+			temp.setColor(color);
+			figures += Figures::mengerSponge(temp, nrIterations);
 		}
 		if (!figure.getPoints().empty()) {
 			figure *= scaleFigure(scale) * rotateX(x) * rotateY(y) * rotateZ(z) * translate(center);

@@ -8,6 +8,7 @@
 
 #include <cfloat>
 #include "Figure.h"
+#include <algorithm>
 
 Matrix scaleFigure(const double scale) {
 	Matrix scaler;
@@ -195,6 +196,38 @@ Figure Figure::icosahedron() {
 	figure.addFace({11, 6, 10});
 	return figure;
 }
+
+Figure Figure::buckyball() {
+	Figure ico = Figure::icosahedron();
+	std::vector<Vector3D> newPoints;
+	newPoints.resize(60);
+	std::vector<Face> pentagons;
+	for (int i = 0; i < 12; ++i) {
+		Face newPent = {};
+		int mod = 0;
+		std::vector<Face *> adjacent;
+		for (auto &face: ico.faces) {
+			auto it = find(face.point_indexes.begin(), face.point_indexes.end(), i);
+			if (it != face.point_indexes.end()) {
+				adjacent.push_back(&face);
+			}
+		}
+		sort(adjacent, i);
+		for (auto &face: adjacent) {
+			auto it = find(face->point_indexes.begin(), face->point_indexes.end(), i);
+			newPent.point_indexes.emplace_back(i + (mod * 12));
+			int nextPoint = *((it + 1 == face->point_indexes.end()) ? face->point_indexes.begin() : it + 1);
+			newPoints[i + (mod * 12)] = (2.0 / 3.0) * ico.getPoints()[i] + (1.0 / 3.0) * ico.getPoints()[nextPoint % 12];
+			*it = i + (mod * 12);
+			face->point_indexes.insert(it, i + (((++mod) % 5) * 12));
+		}
+		pentagons.emplace_back(newPent);
+	}
+	ico.points = newPoints;
+	ico.faces.insert(ico.faces.end(), pentagons.begin(), pentagons.end());
+	return ico;
+}
+
 
 Figure Figure::dodecahedron() {
 	Figure ico = icosahedron();
@@ -423,6 +456,34 @@ Figure Figure::operator*(const Matrix &matrix) const {
 	return fig;
 }
 
+void Figure::sort(std::vector<Face *> &faces, int index) {
+	for (int face = 0; face < faces.size() - 2; ++face) {
+		int point = 0;
+		while (point + 1 < faces[face]->point_indexes.size() && faces[face]->point_indexes[point + 1] != index) point++;
+		int prev = faces[face]->point_indexes[point];
+		int toSwap = 0;
+		for (int test = face + 1; test < faces.size(); ++test) {
+			if (std::find(faces[test]->point_indexes.begin(), faces[test]->point_indexes.end(), prev) !=
+				faces[test]->point_indexes.end()) {
+				toSwap = test;
+				break;
+			}
+		}
+		std::swap(faces[face + 1], faces[toSwap]);
+	}
+	std::cout << "ok";
+	//	int old = index;
+//	for (int j = 0; j < faces.size() - 5; ++j) {
+//		int l = 0;
+//		int next;
+//		do { next = faces[j]->point_indexes[l++]; } while (next == index || next == old);
+//		std::iter_swap(find_if(faces.begin() + 1 + j, faces.end(), [next](const std::vector<int> *a) {
+//			return find(a->begin(), a->end(), next) != a->end();
+//		}), faces.begin() + 1 + j);
+//		old = next;
+//	}
+}
+
 img::EasyImage Figures::draw(unsigned int size, const Color &background) const {
 	auto xMax = -DBL_MAX;
 	auto xMin = DBL_MAX;
@@ -487,7 +548,7 @@ Figures Figures::fractal(Figure &figure, int iter, double scale) {
 	figs.addFigure(figure);
 	for (int i = 0; i < iter; i++) {
 		std::forward_list<Figure> newIt;
-		for (auto & fig : figs.figures) {
+		for (auto &fig : figs.figures) {
 			Figure temp = fig * scaleFigure(1 / scale);
 			for (int j = 0; j < fig.getPoints().size(); j++) {
 				newIt.emplace_front(temp * translate(fig.getPoints()[j] - temp.getPoints()[j]));
@@ -503,9 +564,11 @@ Figures &Figures::operator+=(Figures &&figs) {
 	return *this;
 }
 
-Face::Face(const std::initializer_list<int> &point_indexes) : point_indexes(point_indexes) {}
+Face::Face(
+		const std::initializer_list<int> &point_indexes) : point_indexes(point_indexes) {}
 
-Face::Face(std::vector<int> point_indexes) : point_indexes(std::move(point_indexes)) {}
+Face::Face(std::vector<int>
+		   point_indexes) : point_indexes(std::move(point_indexes)) {}
 
 void Face::triangulate(std::vector<Face> &faces) {
 	faces.reserve(point_indexes.size() - 2);
