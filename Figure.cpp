@@ -474,7 +474,6 @@ void Figure::sort(std::vector<Face *> &faces, int index) {
 		}
 		std::swap(faces[face + 1], faces[toSwap]);
 	}
-	std::cout << "ok";
 }
 
 ////Figure Figure::mengerSponge(const int iter) {
