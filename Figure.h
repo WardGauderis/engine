@@ -37,6 +37,8 @@ struct Face {
 	void triangulate(std::vector<Face> &faces);
 };
 
+class Figures;
+
 class Figure {
 	std::vector<Vector3D> points;
 	std::vector<Face> faces;
@@ -85,11 +87,15 @@ public:
 
 	static Figure Torus(double R, double r, int n, int m);
 
+//	static Figure mengerSponge(int iter);
+
 	Figure(const LParser::LSystem3D &lSystem);
 
 	void triangulate();
 
 	Figure();
+
+//	explicit Figure(Figures& figures, bool removeDoubleFaces);
 
 	void drawCharacter(unsigned int nr, Vector3D &start, Vector3D &H, Vector3D &L, Vector3D &U,
 					   const LParser::LSystem3D &lSystem, char character,
@@ -100,20 +106,30 @@ public:
 
 class Figures {
 	std::forward_list<Figure> figures;
+
+	static void mengerRec(Figures &figs, const int iter, const double scale, const Vector3D &corner);
 public:
 	Figures &operator*=(const Matrix &matrix);
 
 	Figures &operator+=(Figures &&figs);
 
+	Figures operator*(const Matrix &matrix) const;
+
 	const std::forward_list<Figure> &getFigures() const;
 
 	void triangulate();
 
-	void addFigure(Figure &figure);
+	void addFigure(Figure &&figure);
 
 	img::EasyImage draw(unsigned int size, const Color &background) const;
 
 	static Figures fractal(Figure &figure, int iter, double scale);
+
+	static Figures mengerSponge(int iter);
+
+	void setColor(const Color &newColor);
+
+//	friend Figure::Figure(Figures& figures, bool removeDoubleFaces);
 };
 
 #endif //ENGINE_CMAKE_FIGURE_H

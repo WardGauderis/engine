@@ -226,15 +226,16 @@ img::EasyImage draw3D(const ini::Configuration &configuration, const render type
 			figures += Figures::fractal(temp, nrIterations, fractalScale);
 		} else if (figureType == "MengerSponge") {
 			const int nrIterations = configuration["Figure" + std::to_string(i)]["nrIterations"];
-			Figure temp = Figure::cube();
-			temp *= scaleFigure(scale) * rotateX(x) * rotateY(y) * rotateZ(z) * translate(center);
+			Figures temp =
+					Figures::mengerSponge(nrIterations) * scaleFigure(scale) * rotateX(x) * rotateY(y) * rotateZ(z) *
+					translate(center);
 			temp.setColor(color);
-			figures += Figures::mengerSponge(temp, nrIterations);
+			figures += std::move(temp);
 		}
 		if (!figure.getPoints().empty()) {
 			figure *= scaleFigure(scale) * rotateX(x) * rotateY(y) * rotateZ(z) * translate(center);
 			figure.setColor(color);
-			figures.addFigure(figure);
+			figures.addFigure(std::move(figure));
 		}
 	}
 	figures *= eyePoint(eye);

@@ -217,14 +217,17 @@ Figure Figure::buckyball() {
 			auto it = find(face->point_indexes.begin(), face->point_indexes.end(), i);
 			newPent.point_indexes.emplace_back(i + (mod * 12));
 			int nextPoint = *((it + 1 == face->point_indexes.end()) ? face->point_indexes.begin() : it + 1);
-			newPoints[i + (mod * 12)] = (2.0 / 3.0) * ico.getPoints()[i] + (1.0 / 3.0) * ico.getPoints()[nextPoint % 12];
+			newPoints[i + (mod * 12)] =
+					(2.0 / 3.0) * ico.getPoints()[i] + (1.0 / 3.0) * ico.getPoints()[nextPoint % 12];
 			*it = i + (mod * 12);
 			face->point_indexes.insert(it, i + (((++mod) % 5) * 12));
 		}
 		pentagons.emplace_back(newPent);
 	}
 	ico.points = newPoints;
-	ico.faces.insert(ico.faces.end(), pentagons.begin(), pentagons.end());
+//	ico.faces.insert(ico.faces.end(), pentagons.begin(), pentagons.end());
+	ico.faces.reserve(pentagons.size());
+	std::move(pentagons.begin(), pentagons.end(), std::back_inserter(ico.faces));
 	return ico;
 }
 
@@ -472,17 +475,110 @@ void Figure::sort(std::vector<Face *> &faces, int index) {
 		std::swap(faces[face + 1], faces[toSwap]);
 	}
 	std::cout << "ok";
-	//	int old = index;
-//	for (int j = 0; j < faces.size() - 5; ++j) {
-//		int l = 0;
-//		int next;
-//		do { next = faces[j]->point_indexes[l++]; } while (next == index || next == old);
-//		std::iter_swap(find_if(faces.begin() + 1 + j, faces.end(), [next](const std::vector<int> *a) {
-//			return find(a->begin(), a->end(), next) != a->end();
-//		}), faces.begin() + 1 + j);
-//		old = next;
-//	}
 }
+
+////Figure Figure::mengerSponge(const int iter) {
+////	Figures menger;
+////	menger.addFigure(Figure::cube() * rotateX(1) * rotateY(1));
+////	double scale = 1;
+////	for (int i = 0; i < iter; ++i) {
+////		Figures newMenger;
+////		for (const auto &cube: menger.getFigures()) {
+////			Figure newCube = cube * scaleFigure(1.0/3);
+////			std::vector<Vector3D> points = {
+////					cube.getPoints()[5] + Vector3D::vector(0, 0, 0),
+////					cube.getPoints()[5] + Vector3D::vector(scale, 0, 0),
+////					cube.getPoints()[5] + Vector3D::vector(2 * scale, 0, 0),
+////					cube.getPoints()[5] + Vector3D::vector(0, scale, 0),
+////					cube.getPoints()[5] + Vector3D::vector(2 * scale, scale, 0),
+////					cube.getPoints()[5] + Vector3D::vector(0, 2 * scale, 0),
+////					cube.getPoints()[5] + Vector3D::vector(scale, 2 * scale, 0),
+////					cube.getPoints()[5] + Vector3D::vector(2 * scale, 2 * scale, 0),
+////
+////					cube.getPoints()[5] + Vector3D::vector(0, 0, scale),
+////					cube.getPoints()[5] + Vector3D::vector(2 * scale, 0, scale),
+////					cube.getPoints()[5] + Vector3D::vector(0, 2 * scale, scale),
+////					cube.getPoints()[5] + Vector3D::vector(2 * scale, 2 * scale, scale),
+////
+////					cube.getPoints()[5] + Vector3D::vector(0, 0, 2 * scale),
+////					cube.getPoints()[5] + Vector3D::vector(scale, 0, 2 * scale),
+////					cube.getPoints()[5] + Vector3D::vector(2 * scale, 0, 2 * scale),
+////					cube.getPoints()[5] + Vector3D::vector(0, scale, 2*scale),
+////					cube.getPoints()[5] + Vector3D::vector(2 * scale, scale, 2*scale),
+////					cube.getPoints()[5] + Vector3D::vector(0, 2 * scale, 2*scale),
+////					cube.getPoints()[5] + Vector3D::vector(scale, 2 * scale, 2*scale),
+////					cube.getPoints()[5] + Vector3D::vector(2 * scale, 2 * scale, 2*scale),
+////			};
+////			for (const auto &point: points) {
+////				newMenger.addFigure(newCube * translate(cube.getPoints()[5] - point));
+////			}
+////		}
+////		menger = std::move(newMenger);
+////		scale /= 3;
+////	}
+////	Figure mengerSimple = Figure(menger, false);
+////	int i = mengerSimple.faces.size();
+////	return mengerSimple;
+////}
+//
+//Figure::Figure(Figures &figures, bool removeDoubleFaces) {
+//	for (auto &figure: figures.figures) {
+//		faces.reserve(figure.faces.size());
+//		for (auto &face: figure.faces) {
+//			for (auto &index: face.point_indexes) {
+//				index += points.size();
+//			}
+//			faces.push_back(std::move(face));
+//		}
+//		points.reserve(figure.points.size());
+//		std::move(figure.points.begin(), figure.points.end(), std::back_inserter(points));
+//	}
+//	if (removeDoubleFaces) {
+//		Vector3D toFind;
+//		auto compare = [&toFind](const Vector3D &a) {
+//			return (a.x == toFind.x) && (a.y == toFind.y) && (a.z == toFind.z);
+//		};
+//		for (int i = 0; i < points.size(); i++) {
+//			if (points[i].x != NAN) {
+//				toFind = points[i];
+//				auto it = std::find_if(points.begin() + i + 1, points.end(), compare);
+//				while (it != points.end()) {
+//					*it = Vector3D::point({NAN, NAN, NAN});
+//					int pos = it - points.begin();
+//					for (auto &face: faces) {
+//						auto it2 = find(face.point_indexes.begin(), face.point_indexes.end(), pos);
+//						if (it2 != face.point_indexes.end()) {
+//							*it2 = i;
+//						}
+//					}
+//					it = std::find_if(it + 1, points.end(), compare);
+//				}
+//			}
+//		}
+//		for (auto it = faces.begin(), next = it; it != faces.end(); it = next) {
+//			next++;
+//			bool erased = false;
+//			for (auto it2 = it + 1, next2 = it2; it2 != faces.end(); it2 = next2) {
+//				next2++;
+//				int count = 0;
+//				for (auto &point: (*it).point_indexes) {
+//					if (std::find((*it2).point_indexes.begin(), (*it2).point_indexes.end(), point) !=
+//						(*it2).point_indexes.end()) {
+//						count++;
+//					}
+//				}
+//				if (count > 2) {
+//					next2 = faces.erase(it2);
+//					erased = true;
+//				}
+//			}
+//			if (erased) {
+//				next = faces.erase(it);
+//			}
+//		}
+//	}
+//	color = figures.getFigures().front().getColor();
+//}
 
 img::EasyImage Figures::draw(unsigned int size, const Color &background) const {
 	auto xMax = -DBL_MAX;
@@ -533,7 +629,7 @@ const std::forward_list<Figure> &Figures::getFigures() const {
 	return figures;
 }
 
-void Figures::addFigure(Figure &figure) {
+void Figures::addFigure(Figure &&figure) {
 	figures.emplace_front(std::move(figure));
 }
 
@@ -543,9 +639,9 @@ void Figures::triangulate() {
 	}
 }
 
-Figures Figures::fractal(Figure &figure, int iter, double scale) {
+Figures Figures::fractal(Figure &figure, const int iter, const double scale) {
 	Figures figs;
-	figs.addFigure(figure);
+	figs.addFigure(std::move(figure));
 	for (int i = 0; i < iter; i++) {
 		std::forward_list<Figure> newIt;
 		for (auto &fig : figs.figures) {
@@ -562,6 +658,55 @@ Figures Figures::fractal(Figure &figure, int iter, double scale) {
 Figures &Figures::operator+=(Figures &&figs) {
 	figures.splice_after(figures.before_begin(), figs.figures);
 	return *this;
+}
+
+Figures Figures::operator*(const Matrix &matrix) const {
+	Figures fig = *this;
+	fig *= matrix;
+	return fig;
+}
+
+Figures Figures::mengerSponge(const int iter) {
+	Figures mengerSponge;
+	mengerRec(mengerSponge, iter, 1, Vector3D::point(-1, -1, -1));
+	return mengerSponge;
+}
+
+void Figures::mengerRec(Figures &figs, const int iter, double scale, const Vector3D &corner) {
+	if (iter == 0) {
+		figs.figures.push_front(Figure::cube() * scaleFigure(scale) * translate(corner-Vector3D::point(-1, -1, -1)));
+	} else {
+		scale /= 3;
+		double s = scale * 2;
+		mengerRec(figs, iter - 1, scale, corner + Vector3D::vector(0, 0, 0));
+		mengerRec(figs, iter - 1, scale, corner + Vector3D::vector(s, 0, 0));
+		mengerRec(figs, iter - 1, scale, corner + Vector3D::vector(2 * s, 0, 0));
+		mengerRec(figs, iter - 1, scale, corner + Vector3D::vector(0, s, 0));
+		mengerRec(figs, iter - 1, scale, corner + Vector3D::vector(2 * s, s, 0));
+		mengerRec(figs, iter - 1, scale, corner + Vector3D::vector(0, 2 * s, 0));
+		mengerRec(figs, iter - 1, scale, corner + Vector3D::vector(s, 2 * s, 0));
+		mengerRec(figs, iter - 1, scale, corner + Vector3D::vector(2 * s, 2 * s, 0));
+
+		mengerRec(figs, iter - 1, scale, corner + Vector3D::vector(0, 0, s));
+		mengerRec(figs, iter - 1, scale, corner + Vector3D::vector(2 * s, 0, s));
+		mengerRec(figs, iter - 1, scale, corner + Vector3D::vector(0, 2 * s, s));
+		mengerRec(figs, iter - 1, scale, corner + Vector3D::vector(2 * s, 2 * s, s));
+
+		mengerRec(figs, iter - 1, scale, corner + Vector3D::vector(0, 0, 2 * s));
+		mengerRec(figs, iter - 1, scale, corner + Vector3D::vector(s, 0, 2 * s));
+		mengerRec(figs, iter - 1, scale, corner + Vector3D::vector(2 * s, 0, 2 * s));
+		mengerRec(figs, iter - 1, scale, corner + Vector3D::vector(0, s, 2 * s));
+		mengerRec(figs, iter - 1, scale, corner + Vector3D::vector(2 * s, s, 2 * s));
+		mengerRec(figs, iter - 1, scale, corner + Vector3D::vector(0, 2 * s, 2 * s));
+		mengerRec(figs, iter - 1, scale, corner + Vector3D::vector(s, 2 * s, 2 * s));
+		mengerRec(figs, iter - 1, scale, corner + Vector3D::vector(2 * s, 2 * s, 2 * s));
+	}
+}
+
+void Figures::setColor(const Color &newColor) {
+	for (auto &figure: figures) {
+		figure.setColor(newColor);
+	}
 }
 
 Face::Face(
