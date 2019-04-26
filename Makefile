@@ -1,4 +1,4 @@
-CXXFLAGS   = -O3 -Wall -Wextra -g -fstack-protector-all -std=c++14
+CXXFLAGS   = -O2 -Wall -Wextra -g -fstack-protector-all -std=c++14
 LDFLAGS    =
 EXECUTABLE = engine
 #SOURCES    = $(basename $(shell find . -name '*.cc' -or -name '*.cpp'))

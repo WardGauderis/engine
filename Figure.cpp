@@ -61,19 +61,17 @@ Matrix eyePoint(const Vector3D &eyepoint) {
 	double phi = acos(eyepoint.z / r);
 	double theta = atan2(eyepoint.y, eyepoint.x);
 	auto trans = Vector3D::point(0, 0, -r);
-//	Matrix test = rotateZ((-M_PI / 2) - theta) * rotateX(-phi) * translate(trans);
-
-	Matrix eye;
-	eye(1, 1) = -sin(theta);
-	eye(1, 2) = -cos(theta) * cos(phi);
-	eye(1, 3) = cos(theta) * sin(phi);
-	eye(2, 1) = cos(theta);
-	eye(2, 2) = -sin(theta) * cos(phi);
-	eye(2, 3) = sin(theta) * sin(phi);
-	eye(3, 2) = sin(phi);
-	eye(3, 3) = cos(phi);
-	eye(4, 3) = -r;
-
+	Matrix eye = rotateZ((-M_PI / 2) - theta) * rotateX(-phi) * translate(trans);
+//	Matrix eye;
+//	eye(1, 1) = -sin(theta);
+//	eye(1, 2) = -cos(theta) * cos(phi);
+//	eye(1, 3) = cos(theta) * sin(phi);
+//	eye(2, 1) = cos(theta);
+//	eye(2, 2) = -sin(theta) * cos(phi);
+//	eye(2, 3) = sin(theta) * sin(phi);
+//	eye(3, 2) = sin(phi);
+//	eye(3, 3) = cos(phi);
+//	eye(4, 3) = -r;
 	return eye;
 }
 
@@ -110,6 +108,7 @@ void Figure::setColor(const Color &newColor) {
 
 Figure Figure::cube() {
 	Figure figure;
+	figure.points.reserve(8);
 	figure.addPoint(Vector3D::point(1, -1, -1));
 	figure.addPoint(Vector3D::point(-1, 1, -1));
 	figure.addPoint(Vector3D::point(1, 1, 1));
@@ -118,6 +117,7 @@ Figure Figure::cube() {
 	figure.addPoint(Vector3D::point(-1, -1, -1));
 	figure.addPoint(Vector3D::point(1, -1, 1));
 	figure.addPoint(Vector3D::point(-1, 1, 1));
+	figure.faces.reserve(6);
 	figure.addFace({0, 4, 2, 6});
 	figure.addFace({4, 1, 7, 2});
 	figure.addFace({1, 5, 3, 7});
@@ -142,12 +142,14 @@ Figure Figure::tetrahedron() {
 
 Figure Figure::octahedron() {
 	Figure figure;
+	figure.points.reserve(6);
 	figure.addPoint(Vector3D::point(1, 0, 0));
 	figure.addPoint(Vector3D::point(0, 1, 0));
 	figure.addPoint(Vector3D::point(-1, 0, 0));
 	figure.addPoint(Vector3D::point(0, -1, 0));
 	figure.addPoint(Vector3D::point(0, 0, -1));
 	figure.addPoint(Vector3D::point(0, 0, 1));
+    figure.faces.reserve(8);
 	figure.addFace({0, 1, 5});
 	figure.addFace({1, 2, 5});
 	figure.addFace({2, 3, 5});
@@ -161,6 +163,7 @@ Figure Figure::octahedron() {
 
 Figure Figure::icosahedron() {
 	Figure figure;
+    figure.points.reserve(12);
 	for (int i = 1; i <= 12; ++i) {
 		if (i == 1) {
 			figure.addPoint(Vector3D::point(0, 0, sqrt(5) / 2));
@@ -174,6 +177,7 @@ Figure Figure::icosahedron() {
 			figure.addPoint(Vector3D::point(0, 0, -sqrt(5) / 2));
 		}
 	}
+    figure.faces.reserve(20);
 	figure.addFace({0, 1, 2});
 	figure.addFace({0, 2, 3});
 	figure.addFace({0, 3, 4});
@@ -200,7 +204,7 @@ Figure Figure::icosahedron() {
 Figure Figure::buckyball() {
 	Figure ico = Figure::icosahedron();
 	std::vector<Vector3D> newPoints;
-	newPoints.resize(60);
+	newPoints.reserve(60);
 	std::vector<Face> pentagons;
 	for (int i = 0; i < 12; ++i) {
 		Face newPent = {};
@@ -235,10 +239,12 @@ Figure Figure::buckyball() {
 Figure Figure::dodecahedron() {
 	Figure ico = icosahedron();
 	Figure figure;
+	figure.points.reserve(20);
 	for (const auto &face: ico.getFaces()) {
 		figure.addPoint((ico.getPoints()[face.point_indexes[0]] + ico.getPoints()[face.point_indexes[1]] +
 						 ico.getPoints()[face.point_indexes[2]]) / 3);
 	}
+    figure.faces.reserve(12);
 	figure.addFace({0, 1, 2, 3, 4});
 	figure.addFace({0, 5, 6, 7, 1});
 	figure.addFace({1, 7, 8, 9, 2});
@@ -256,23 +262,25 @@ Figure Figure::dodecahedron() {
 
 Figure Figure::cylinder(const int n, const double height) {
 	Figure figure;
+    figure.points.reserve(2*n);
 	for (int i = 0; i < n; ++i) {
 		figure.addPoint(Vector3D::point(cos(2 * i * M_PI / n), sin(2 * i * M_PI / n), 0));
 	}
 	for (int i = 0; i < n; ++i) {
 		figure.addPoint(Vector3D::point(cos(2 * i * M_PI / n), sin(2 * i * M_PI / n), height));
 	}
+    figure.faces.reserve(n + 2);
 	for (int j = 0; j < n; ++j) {
 		figure.addFace({j, (j + 1) % n, ((j + 1) % n) + n, j + n});
 	}
 	std::vector<int> points1;
-	points1.reserve((unsigned long) n);
+    points1.reserve(n);
 	for (int k = 0; k < n; ++k) {
 		points1.push_back(n - 1 - k);
 	}
 	figure.addFace(points1);
 	std::vector<int> points2;
-	points2.reserve((unsigned long) n);
+	points2.reserve(n);
 	for (int k = 0; k < n; ++k) {
 		points2.push_back(2 * n - 1 - k);
 	}
@@ -282,14 +290,17 @@ Figure Figure::cylinder(const int n, const double height) {
 
 Figure Figure::cone(const int n, const double height) {
 	Figure figure;
+    figure.points.reserve(n + 1);
 	for (int i = 0; i < n; ++i) {
 		figure.addPoint(Vector3D::point(cos(2 * i * M_PI / n), sin(2 * i * M_PI / n), 0));
 	}
 	figure.addPoint(Vector3D::point(0, 0, height));
+    figure.faces.reserve(n);
 	for (int j = 0; j < n; ++j) {
 		figure.addFace({j, (j + 1) % n, n});
 	}
 	std::vector<int> points;
+    points.reserve(n);
 	points.reserve((unsigned long) n);
 	for (int k = 0; k < n; ++k) {
 		points.push_back(n - 1 - k);
@@ -301,9 +312,11 @@ Figure Figure::cone(const int n, const double height) {
 Figure Figure::sphere(const int n) {
 	Figure figure = icosahedron();
 	for (int j = 0; j < n; ++j) {
+        figure.points.reserve(2*figure.points.size());
+        figure.faces.reserve(3*figure.faces.size());
 		const int size = static_cast<const int>(figure.getFaces().size());
 		for (int i = 0; i < size; i++) {
-			const Face face = figure.getFaces()[0];
+			const Face face = figure.getFaces()[i];
 			const Vector3D A = figure.getPoints()[face.point_indexes[0]];
 			const Vector3D B = figure.getPoints()[face.point_indexes[1]];
 			const Vector3D C = figure.getPoints()[face.point_indexes[2]];
@@ -313,8 +326,8 @@ Figure Figure::sphere(const int n) {
 			figure.addPoint(D);
 			figure.addPoint(E);
 			figure.addPoint(F);
-			figure.addFace({face.point_indexes[0], static_cast<int>(figure.getPoints().size() - 3),
-							static_cast<int>(figure.getPoints().size() - 2)});
+			figure.faces[i] = {face.point_indexes[0], static_cast<int>(figure.getPoints().size() - 3),
+                               static_cast<int>(figure.getPoints().size() - 2)};
 			figure.addFace({face.point_indexes[1], static_cast<int>(figure.getPoints().size() - 1),
 							static_cast<int>(figure.getPoints().size() - 3)});
 			figure.addFace({face.point_indexes[2], static_cast<int>(figure.getPoints().size() - 2),
@@ -322,15 +335,10 @@ Figure Figure::sphere(const int n) {
 			figure.addFace(
 					{static_cast<int>(figure.getPoints().size() - 3), static_cast<int>(figure.getPoints().size() - 1),
 					 static_cast<int>(figure.getPoints().size() - 2)});
-			figure.deleteFace(0);
 		}
 	}
 	figure.normalize();
 	return figure;
-}
-
-void Figure::deleteFace(const int i) {
-	faces.erase(faces.begin() + i);
 }
 
 void Figure::normalize() {
@@ -341,6 +349,7 @@ void Figure::normalize() {
 
 Figure Figure::Torus(const double R, const double r, const int n, const int m) {
 	Figure figure;
+    figure.points.reserve(n * m);
 	for (int i = 0; i < n; ++i) {
 		for (int j = 0; j < m; ++j) {
 			const double u = 2 * i * M_PI / n;
@@ -351,6 +360,7 @@ Figure Figure::Torus(const double R, const double r, const int n, const int m) {
 			figure.addPoint(Vector3D::point(x, y, z));
 		}
 	}
+    figure.faces.reserve(n*m);
 	for (int i = 0; i < n; ++i) {
 		for (int j = 0; j < m; ++j) {
 			figure.addFace(
