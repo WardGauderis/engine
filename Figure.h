@@ -126,6 +126,8 @@ public:
 
     static Figures fractal(Figure &figure, int iter, double scale);
 
+    static void fractalRec(Figures &figs, const Figure &fig, int iter, double scale);
+
     static Figures mengerSponge(int iter);
 
     void setColor(const Color &newColor);
