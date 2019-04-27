@@ -268,6 +268,8 @@ img::EasyImage generate_image(const ini::Configuration &configuration) {
 		return draw3D(configuration, zbuf);
 	} else if (type == "ZBuffering") {
 		return draw3D(configuration, triangle);
+    } else if (type == "LightedZbuffering") {
+
 	}
 	return img::EasyImage();
 }
