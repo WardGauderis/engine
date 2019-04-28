@@ -435,9 +435,7 @@ img::EasyImage::draw_triangle(ZBuffer &zBuffer, const Vector3D &a, const Vector3
         if (light.isInf()) {
             const Vector3D l = -light.vector;
             const double cos = Vector3D::dot(n, l);
-            if (cos > 0) {
-                ambientAndInf += diffuse * light.diffuse * cos;
-            }
+            ambientAndInf += diffuse * light.diffuse * std::max(cos, 0.0);
         }
     }
 
@@ -464,17 +462,15 @@ img::EasyImage::draw_triangle(ZBuffer &zBuffer, const Vector3D &a, const Vector3
             if (z <= zBuffer[y][x]) {
 
                 const double realX = -(x - dx) / (d * z);
-                const double readY = -(y - dy) / (d * z);
-                const Vector3D real = Vector3D::point(realX, readY, z);
+                const double realY = -(y - dy) / (d * z);
+                const Vector3D real = Vector3D::point(realX, realY, 1 / z);
                 ::Color point;
                 for (const auto &light: lights) {
                     if (!light.isInf()) {
                         Vector3D l = light.vector - real;
                         l.normalise();
                         const double cos = Vector3D::dot(n, l);
-                        if (cos > 0) {
-                            point += diffuse * light.diffuse * cos;
-                        }
+                        point += diffuse * light.diffuse * std::max(cos, 0.0);
                     }
                 }
 

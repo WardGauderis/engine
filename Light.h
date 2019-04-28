@@ -30,6 +30,7 @@ struct Light {
 
     Light &operator*=(const Matrix &matrix) {
         vector *= matrix;
+        return *this;
     }
 
 };
@@ -39,6 +40,7 @@ struct Lights : public std::forward_list<Light> {
         for (auto &light: *this) {
             light *= matrix;
         }
+        return *this;
     }
 };
 
