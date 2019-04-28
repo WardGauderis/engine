@@ -90,20 +90,12 @@ const std::vector<Face> &Figure::getFaces() const {
     return faces;
 }
 
-const Color &Figure::getColor() const {
-    return color;
-}
-
 void Figure::addPoint(const Vector3D &vector) {
     points.push_back(vector);
 }
 
 void Figure::addFace(const Face &face) {
     faces.push_back(face);
-}
-
-void Figure::setColor(const Color &newColor) {
-    Figure::color = newColor;
 }
 
 Figure Figure::cube() {
@@ -486,6 +478,30 @@ void Figure::sort(std::vector<Face *> &faces, int index) {
     }
 }
 
+void Figure::setColor(const Color &a, const Color &d, const Color &s, const double r) {
+    ambient = a;
+    diffuse = d;
+    specular = s;
+    reflectionCoefficient = r;
+}
+
+const Color &Figure::getAmbient() const {
+    return ambient;
+}
+
+const Color &Figure::getDiffuse() const {
+    return diffuse;
+}
+
+const Color &Figure::getSpecular() const {
+    return specular;
+}
+
+double Figure::getReflectionCoefficient() const {
+    return reflectionCoefficient;
+}
+
+
 ////Figure Figure::mengerSponge(const int iter) {
 ////	Figures menger;
 ////	menger.addFigure(Figure::cube() * rotateX(1) * rotateY(1));
@@ -589,7 +605,7 @@ void Figure::sort(std::vector<Face *> &faces, int index) {
 //	color = figures.getFigures().front().getColor();
 //}
 
-img::EasyImage Figures::draw(unsigned int size, const Color &background) const {
+img::EasyImage Figures::draw(unsigned int size, const Color &background, const Lights &lights) const {
     auto xMax = -DBL_MAX;
     auto xMin = DBL_MAX;
     auto yMax = -DBL_MAX;
@@ -617,11 +633,20 @@ img::EasyImage Figures::draw(unsigned int size, const Color &background) const {
     img::EasyImage image(static_cast<unsigned int>(round(xImage)), static_cast<unsigned int>(round(yImage)));
     ZBuffer buffer(image.get_width(), image.get_height());
     image.clear(background);
+    Color totalAmbient;
+    for (const auto &light: lights) {
+        totalAmbient += light.ambient;
+    }
     for (const auto &figure: figures) {
         for (const auto &triangle: figure.getFaces()) {
-            image.draw_triangle(buffer, figure.getPoints()[triangle.point_indexes[0]],
+            image.draw_triangle(buffer,
+                                figure.getPoints()[triangle.point_indexes[0]],
                                 figure.getPoints()[triangle.point_indexes[1]],
-                                figure.getPoints()[triangle.point_indexes[2]], d, dx, dy, figure.getColor());
+                                figure.getPoints()[triangle.point_indexes[2]],
+                                d, dx, dy,
+                                figure.getAmbient(), figure.getDiffuse(), figure.getSpecular(),
+                                figure.getReflectionCoefficient(),
+                                lights, totalAmbient);
         }
     }
     return image;
@@ -724,9 +749,9 @@ void Figures::mengerRec(Figures &figs, const int iter, double scale, const Vecto
     }
 }
 
-void Figures::setColor(const Color &newColor) {
+void Figures::setColor(const Color &a, const Color &d, const Color &s, double r) {
     for (auto &figure: figures) {
-        figure.setColor(newColor);
+        figure.setColor(a, d, s, r);
     }
 }
 

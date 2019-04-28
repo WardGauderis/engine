@@ -116,9 +116,9 @@ Lines2D::Lines2D(const Figures &figures) {
 			if (face.point_indexes.size() == 2) {
 				const Point2D a = Point2D(figure.getPoints()[face.point_indexes[0]], 1);
 				const Point2D b = Point2D(figure.getPoints()[face.point_indexes[1]], 1);
-				auto first = lines.emplace(std::min(a, b), std::max(a, b), figure.getColor());
+				auto first = lines.emplace(std::min(a, b), std::max(a, b), figure.getAmbient());
 				if (!first.second) {
-					(*first.first).color = figure.getColor();
+					(*first.first).color = figure.getAmbient();
 				} else {
 					lineptrs.push_back(first.first);
 				}
@@ -127,9 +127,9 @@ Lines2D::Lines2D(const Figures &figures) {
 					const Point2D a = Point2D(figure.getPoints()[face.point_indexes[i]], 1);
 					const Point2D b = Point2D(
 							figure.getPoints()[face.point_indexes[(i + 1) % face.point_indexes.size()]], 1);
-					auto first = lines.emplace(std::min(a, b), std::max(a, b), figure.getColor());
+					auto first = lines.emplace(std::min(a, b), std::max(a, b), figure.getAmbient());
 					if (!first.second) {
-						(*first.first).color = figure.getColor();
+						(*first.first).color = figure.getAmbient();
 					} else {
 						lineptrs.push_back(first.first);
 					}

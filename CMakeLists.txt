@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 14)
 
 include_directories(.)
 include_directories(l_parser)
-set(CMAKE_CXX_FLAGS "-O2")
+set(CMAKE_CXX_FLAGS "")
 add_executable(engine_cmake
         l_parser/l_parser.cc
         l_parser/l_parser.h
@@ -17,4 +17,10 @@ add_executable(engine_cmake
         ini_configuration.cc
         ini_configuration.h
         Line2D.cpp
-        Line2D.h Figure.cpp Figure.h "ZBuffer.cpp" "ZBuffer.h")
+        Line2D.h
+        Figure.cpp
+        Figure.h
+        ZBuffer.cpp
+        ZBuffer.h
+        Light.h
+        Color.h)

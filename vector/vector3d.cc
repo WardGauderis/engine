@@ -453,6 +453,10 @@ Vector3D Vector3D::point(const std::vector<double> &point) {
 
 }
 
+Vector3D Vector3D::vector(const std::vector<double> &vector) {
+    return Vector3D(vector[0], vector[1], vector[2], true);
+}
+
 std::ostream &operator<<(std::ostream &output_stream,
 						 const Vector3D &vector) {
 	vector.print(output_stream);

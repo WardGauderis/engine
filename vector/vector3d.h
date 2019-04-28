@@ -262,6 +262,8 @@ public:
 
 	static Vector3D point(const std::vector<double> &point);
 
+    static Vector3D vector(const std::vector<double> &vector);
+
 	/**
 	 * \brief Constructs a new Vector3D object that represents a point.
 	 *

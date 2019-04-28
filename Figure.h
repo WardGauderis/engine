@@ -11,9 +11,9 @@
 #include <forward_list>
 #include "l_parser/l_parser.h"
 #include "vector/vector3d.h"
-#include "easy_image.h"
 #include "ini_configuration.h"
 #include <stack>
+#include "easy_image.h"
 
 Matrix scaleFigure(double scale);
 
@@ -39,16 +39,29 @@ struct Face {
     Face() = default;
 };
 
-class Figures;
+//class Figures;
 
 class Figure {
     std::vector<Vector3D> points;
     std::vector<Face> faces;
-    Color color;
+    Color ambient;
+    Color diffuse;
+    Color specular;
+    double reflectionCoefficient;
 
     static void sort(std::vector<Face *> &faces, int index);
 
 public:
+    void setColor(const Color &a, const Color &d, const Color &s, double r);
+
+    const Color &getAmbient() const;
+
+    const Color &getDiffuse() const;
+
+    const Color &getSpecular() const;
+
+    double getReflectionCoefficient() const;
+
     Figure &operator*=(const Matrix &matrix);
 
     Figure operator*(const Matrix &matrix) const;
@@ -56,10 +69,6 @@ public:
     const std::vector<Vector3D> &getPoints() const;
 
     const std::vector<Face> &getFaces() const;
-
-    void setColor(const Color &newColor);
-
-    const Color &getColor() const;
 
     void addPoint(const Vector3D &vector);
 
@@ -99,8 +108,7 @@ public:
 
     void drawCharacter(unsigned int nr, Vector3D &start, Vector3D &H, Vector3D &L, Vector3D &U,
                        const LParser::LSystem3D &lSystem, char character,
-                       std::stack<std::tuple<Vector3D, Vector3D, Vector3D, Vector3D, int>> &brackets,
-                       double angle,
+                       std::stack<std::tuple<Vector3D, Vector3D, Vector3D, Vector3D, int>> &brackets, double angle,
                        int &prevPoint);
 };
 
@@ -110,6 +118,8 @@ class Figures {
     static void mengerRec(Figures &figs, const int iter, const double scale, const Vector3D &corner);
 
 public:
+    void setColor(const Color &a, const Color &d, const Color &s, double r);
+
     Figures &operator*=(const Matrix &matrix);
 
     Figures &operator+=(Figures &&figs);
@@ -122,15 +132,13 @@ public:
 
     void addFigure(Figure &&figure);
 
-    img::EasyImage draw(unsigned int size, const Color &background) const;
+    img::EasyImage draw(unsigned int size, const Color &background, const Lights &lights) const;
 
     static Figures fractal(Figure &figure, int iter, double scale);
 
     static void fractalRec(Figures &figs, const Figure &fig, int iter, double scale);
 
     static Figures mengerSponge(int iter);
-
-    void setColor(const Color &newColor);
 
 //	friend Figure::Figure(Figures& figures, bool removeDoubleFaces);
 };
