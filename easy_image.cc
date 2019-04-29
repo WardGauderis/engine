@@ -464,17 +464,20 @@ img::EasyImage::draw_triangle(ZBuffer &zBuffer, const Vector3D &a, const Vector3
                 const double realX = -(x - dx) / (d * z);
                 const double realY = -(y - dy) / (d * z);
                 const Vector3D real = Vector3D::point(realX, realY, 1 / z);
-                ::Color point;
+                ::Color pointAndSpec;
                 for (const auto &light: lights) {
                     if (!light.isInf()) {
                         Vector3D l = light.vector - real;
                         l.normalise();
-                        const double cos = Vector3D::dot(n, l);
-                        point += diffuse * light.diffuse * std::max(cos, 0.0);
+                        const double cosA = Vector3D::dot(n, l);
+                        pointAndSpec += diffuse * light.diffuse * std::max(cosA, 0.0);
+                        Vector3D r = 2 * cosA * n - l;
+                        const double cosB = Vector3D::dot(r, Vector3D::normalise(Vector3D::vector(-real)));
+                        pointAndSpec += specular * light.specular * pow(std::max(cosB, 0.0), coefficient);
                     }
                 }
 
-                (*this)(x, y) = ambientAndInf + point;
+                (*this)(x, y) = ambientAndInf + pointAndSpec;
                 zBuffer[y][x] = z;
             }
         }
