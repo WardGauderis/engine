@@ -273,7 +273,7 @@ Figure Figure::cylinder(const int n, const double height) {
     figure.addFace(points1);
     std::vector<int> points2;
     points2.reserve(n);
-    for (int k = 0; k < n; ++k) {
+    for (int k = n - 1; k >= 0; --k) {
         points2.push_back(2 * n - 1 - k);
     }
     figure.addFace(points2);
@@ -720,7 +720,9 @@ Figures Figures::mengerSponge(const int iter) {
 
 void Figures::mengerRec(Figures &figs, const int iter, double scale, const Vector3D &corner) {
     if (iter == 0) {
-        figs.addFigure(Figure::cube() * scaleFigure(scale) * translate(corner - Vector3D::point(-1, -1, -1)));
+        Figure figure = Figure::cube() * scaleFigure(scale);
+        figure *= translate(corner - figure.getPoints()[5]);
+        figs.addFigure(std::move(figure));
     } else {
         scale /= 3;
         double s = scale * 2;

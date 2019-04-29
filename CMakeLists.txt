@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 14)
 
 include_directories(.)
 include_directories(l_parser)
-set(CMAKE_CXX_FLAGS "-O2")
+set(CMAKE_CXX_FLAGS "")
 add_executable(engine_cmake
         l_parser/l_parser.cc
         l_parser/l_parser.h
