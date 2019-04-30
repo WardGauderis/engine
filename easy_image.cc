@@ -349,7 +349,12 @@ img::EasyImage::draw_zbuf_line(ZBuffer &zBuffer, unsigned int x0, unsigned int y
     double step = (z1 - z0) / (pixels);
     if (x0 == x1) {
         //special case for x0 == x1
-        for (unsigned int i = std::min(y0, y1); i <= std::max(y0, y1); i++) {
+        if (y0 > y1) {
+            std::swap(y0, y1);
+            z = z1;
+            step = -step;
+        }
+        for (unsigned int i = y0; i <= y1; i++) {
             if (1 / z < zBuffer[i][x0]) {
                 (*this)(x0, i) = color;
                 zBuffer[i][x0] = 1 / z;
@@ -358,7 +363,12 @@ img::EasyImage::draw_zbuf_line(ZBuffer &zBuffer, unsigned int x0, unsigned int y
         }
     } else if (y0 == y1) {
         //special case for y0 == y1
-        for (unsigned int i = std::min(x0, x1); i <= std::max(x0, x1); i++) {
+        if (x0 > x1) {
+            std::swap(x0, x1);
+            z = z1;
+            step = -step;
+        }
+        for (unsigned int i = x0; i <= x1; i++) {
             if (1 / z <= zBuffer[y0][i]) {
                 (*this)(i, y0) = color;
                 zBuffer[y0][i] = 1 / z;
@@ -370,8 +380,7 @@ img::EasyImage::draw_zbuf_line(ZBuffer &zBuffer, unsigned int x0, unsigned int y
             //flip points if x1>x0: we want x0 to have the lowest value
             std::swap(x0, x1);
             std::swap(y0, y1);
-            std::swap(z0, z1);
-            z = z0;
+            z = z1;
             step = -step;
         }
         double m = ((double) y1 - (double) y0) / ((double) x1 - (double) x0);
@@ -420,23 +429,28 @@ img::EasyImage::draw_triangle(ZBuffer &zBuffer, const Vector3D &a, const Vector3
     const unsigned int ymax = static_cast<int>(round(std::max(std::max(A.y, B.y), C.y) - 0.5));
     const double xg = (A.x + B.x + C.x) / 3;
     const double yg = (A.y + B.y + C.y) / 3;
-    const double zg = (1.0 / 3 * a.z) + (1.0 / 3 * b.z) + (1.0 / 3 * c.z);
+    const double zg = 1.0 / (3 * a.z) + 1.0 / (3 * b.z) + 1.0 / (3 * c.z);
     const Vector3D u = b - a;
     const Vector3D v = c - a;
     const Vector3D w = Vector3D::cross(u, v);
     const double k = w.x * a.x + w.y * a.y + w.z * a.z;
     const double dzdx = w.x / (-d * k);
     const double dzdy = w.y / (-d * k);
-    const double z1 = 1.0001 * (1 / zg);
+    const double z1 = 1.0001 * (zg);
 
     ::Color ambientAndInf = ambient * totalAmbient;
     Vector3D n = w / w.length();
+    std::vector<std::pair<double, Vector3D>> cosAndL;
+    cosAndL.reserve(lights.size());
+    unsigned int i = 0;
     for (const auto &light: lights) {
         if (light.isInf()) {
             const Vector3D l = -light.vector;
-            const double cos = Vector3D::dot(n, l);
-            ambientAndInf += diffuse * light.diffuse * std::max(cos, 0.0);
+            const double cosA = Vector3D::dot(n, l);
+            ambientAndInf += diffuse * light.diffuse * std::max(cosA, 0.0);
+            cosAndL[i] = {cosA, l};
         }
+        i++;
     }
 
     for (unsigned int y = ymin; y <= ymax; y++) {
@@ -465,16 +479,21 @@ img::EasyImage::draw_triangle(ZBuffer &zBuffer, const Vector3D &a, const Vector3
                 const double realY = -(y - dy) / (d * z);
                 const Vector3D real = Vector3D::point(realX, realY, 1 / z);
                 ::Color pointAndSpec;
+                i = 0;
                 for (const auto &light: lights) {
                     if (!light.isInf()) {
                         Vector3D l = light.vector - real;
                         l.normalise();
                         const double cosA = Vector3D::dot(n, l);
                         pointAndSpec += diffuse * light.diffuse * std::max(cosA, 0.0);
-                        Vector3D r = 2 * cosA * n - l;
-                        const double cosB = Vector3D::dot(r, Vector3D::normalise(Vector3D::vector(-real)));
-                        pointAndSpec += specular * light.specular * pow(std::max(cosB, 0.0), coefficient);
+                        cosAndL[i] = {cosA, l};
                     }
+                    double cosA = cosAndL[i].first;
+                    Vector3D l = cosAndL[i].second;
+                    Vector3D r = 2 * cosA * n - l;
+                    const double cosB = Vector3D::dot(r, Vector3D::normalise(Vector3D::vector(-real)));
+                    pointAndSpec += specular * light.specular * pow(std::max(cosB, 0.0), coefficient);
+                    i++;
                 }
 
                 (*this)(x, y) = ambientAndInf + pointAndSpec;

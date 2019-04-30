@@ -257,13 +257,14 @@ img::EasyImage draw3D(const ini::Configuration &configuration, const render type
             if (configuration[name]["reflectionCoefficient"].exists())
                 coefficient = configuration[name]["reflectionCoefficient"];
         } else {
-            ambient = std::vector<double>{configuration[name]["color"]};
+            ambient = configuration[name]["color"];
         }
         getFigure(configuration, figures, name, ambient, diffuse, specular, coefficient);
     }
 
     Lights lights;
     if (type == lighted) {
+        lights.reserve(nrLights);
         for (int i = 0; i < nrLights; ++i) {
             const std::string name = "Light" + std::to_string(i);
             const bool infinity = configuration[name]["infinity"].as_bool_or_default(true);
@@ -276,15 +277,15 @@ img::EasyImage draw3D(const ini::Configuration &configuration, const render type
             if (infinity) {
                 std::vector<double> direction = {0, 0, 0};
                 if (configuration[name]["direction"].exists()) direction = configuration[name]["direction"];
-                lights.emplace_front(Light(ambient, diffuse, specular, Vector3D::vector(direction)));
+                lights.emplace_back(Light(ambient, diffuse, specular, Vector3D::vector(direction)));
             } else {
                 std::vector<double> location = {0, 0, 0};
                 if (configuration[name]["location"].exists()) location = configuration[name]["location"];
-                lights.emplace_front(Light(ambient, diffuse, specular, Vector3D::point(location)));
+                lights.emplace_back(Light(ambient, diffuse, specular, Vector3D::point(location)));
             }
         }
     } else {
-        lights.emplace_front(Light{Color(1, 1, 1), Color(), Color(), Vector3D::vector({0, 0, 0})});
+        lights.emplace_back(Light{Color(1, 1, 1), Color(), Color(), Vector3D::point({0, 0, 0})});
     }
 
     figures *= eye;

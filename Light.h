@@ -18,10 +18,10 @@ struct Light {
     Color specular;
     Vector3D vector;
 
-    Light(const Color &ambient, const Color &diffuse, const Color &specular, Vector3D v) :
+    Light(const Color &ambient, const Color &diffuse, const Color &specular, const Vector3D &v) :
             ambient(ambient), diffuse(diffuse), specular(specular) {
-        if (v.is_vector()) v.normalise();
-        vector = v;
+        if (v.is_vector()) vector = Vector3D::normalise(v);
+        else vector = v;
     }
 
     bool isInf() const {
@@ -35,7 +35,7 @@ struct Light {
 
 };
 
-struct Lights : public std::forward_list<Light> {
+struct Lights : public std::vector<Light> {
     Lights &operator*=(const Matrix &matrix) {
         for (auto &light: *this) {
             light *= matrix;
