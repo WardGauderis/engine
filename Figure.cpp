@@ -306,7 +306,7 @@ Figure Figure::sphere(const int n) {
     for (int j = 0; j < n; ++j) {
         figure.points.reserve(2 * figure.points.size());
         figure.faces.reserve(3 * figure.faces.size());
-        const int size = static_cast<const int>(figure.getFaces().size());
+        const int size = figure.getFaces().size();
         for (int i = 0; i < size; i++) {
             const Face face = figure.getFaces()[i];
             const Vector3D A = figure.getPoints()[face.point_indexes[0]];
@@ -462,12 +462,12 @@ Figure Figure::operator*(const Matrix &matrix) const {
 }
 
 void Figure::sort(std::vector<Face *> &faces, int index) {
-    for (int face = 0; face < faces.size() - 2; ++face) {
-        int point = 0;
+    for (unsigned int face = 0; face < faces.size() - 2; ++face) {
+        unsigned int point = 0;
         while (point + 1 < faces[face]->point_indexes.size() && faces[face]->point_indexes[point + 1] != index) point++;
         int prev = faces[face]->point_indexes[point];
         int toSwap = 0;
-        for (int test = face + 1; test < faces.size(); ++test) {
+        for (unsigned int test = face + 1; test < faces.size(); ++test) {
             if (std::find(faces[test]->point_indexes.begin(), faces[test]->point_indexes.end(), prev) !=
                 faces[test]->point_indexes.end()) {
                 toSwap = test;
@@ -678,7 +678,7 @@ void Figures::fractalRec(Figures &figs, const Figure &fig, const int iter, doubl
         figs.figures.push_front(fig);
     } else {
         auto temp = fig * scaleFigure(1 / scale);
-        for (int i = 0; i != fig.getPoints().size(); ++i) {
+        for (unsigned int i = 0; i != fig.getPoints().size(); ++i) {
             fractalRec(figs, temp * translate(fig.getPoints()[i] - temp.getPoints()[i]), iter - 1, scale);
         }
     }

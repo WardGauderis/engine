@@ -462,11 +462,11 @@ img::EasyImage::draw_triangle(ZBuffer &zBuffer, const Vector3D &a, const Vector3
         const std::vector<std::pair<const point *, const point *>> edges = {{&A, &B},
                                                                             {&A, &C},
                                                                             {&B, &C}};
-        for (unsigned int i = 0; i < edges.size(); i++) {
-            auto P = edges[i].first;
-            auto Q = edges[i].second;
+        for (unsigned int j = 0; j < edges.size(); j++) {
+            auto P = edges[j].first;
+            auto Q = edges[j].second;
             if ((y - P->y) * (y - Q->y) <= 0 && P->y != Q->y) {
-                xL[i] = xR[i] = Q->x + (P->x - Q->x) * ((y - Q->y) / (P->y - Q->y));
+                xL[j] = xR[j] = Q->x + (P->x - Q->x) * ((y - Q->y) / (P->y - Q->y));
             }
         }
         const unsigned int xl = static_cast<int>(round(*std::min_element(xL.begin(), xL.end()) + 0.5));
