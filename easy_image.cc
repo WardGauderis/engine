@@ -495,7 +495,6 @@ img::EasyImage::draw_triangle(ZBuffer &zBuffer, const Vector3D &a, const Vector3
                     pointAndSpec += specular * light.specular * pow(std::max(cosB, 0.0), coefficient);
                     i++;
                 }
-
                 (*this)(x, y) = ambientAndInf + pointAndSpec;
                 zBuffer[y][x] = z;
             }

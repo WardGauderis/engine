@@ -275,7 +275,7 @@ img::EasyImage draw3D(const ini::Configuration &configuration, const render type
             std::vector<double> specular = {0, 0, 0};
             if (configuration[name]["specularLight"].exists()) specular = configuration[name]["specularLight"];
             if (infinity) {
-                std::vector<double> direction = {0, 0, 0};
+                std::vector<double> direction = {1, 1, 1};
                 if (configuration[name]["direction"].exists()) direction = configuration[name]["direction"];
                 lights.emplace_back(Light(ambient, diffuse, specular, Vector3D::vector(direction)));
             } else {
@@ -285,7 +285,7 @@ img::EasyImage draw3D(const ini::Configuration &configuration, const render type
             }
         }
     } else {
-        lights.emplace_back(Light{Color(1, 1, 1), Color(), Color(), Vector3D::point({0, 0, 0})});
+        lights.emplace_back(Light{Color(1, 1, 1), Color(), Color(), Vector3D::vector({1, 1, 1})});
     }
 
     figures *= eye;
