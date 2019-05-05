@@ -5,11 +5,11 @@
 #ifndef ENGINE_LINE2D_H
 #define ENGINE_LINE2D_H
 
-#include "easy_image.h"
 #include "l_parser/l_parser.h"
 #include "Figure.h"
 #include <stack>
 #include "vector/vector3d.h"
+#include "easy_image.h"
 
 struct Point2D {
 	double x;

@@ -1,0 +1,2 @@
+#! /bin/bash
+compare -compose src $1 $2 /tmp/TEMP.png; sxiv /tmp/TEMP.png

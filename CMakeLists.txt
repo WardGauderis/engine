@@ -17,4 +17,10 @@ add_executable(engine_cmake
         ini_configuration.cc
         ini_configuration.h
         Line2D.cpp
-        Line2D.h Figure.cpp Figure.h "ZBuffer.cpp" "ZBuffer.h")
+        Line2D.h
+        Figure.cpp
+        Figure.h
+        ZBuffer.cpp
+        ZBuffer.h
+        Light.h
+        Color.h)

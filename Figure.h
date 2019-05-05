@@ -11,9 +11,9 @@
 #include <forward_list>
 #include "l_parser/l_parser.h"
 #include "vector/vector3d.h"
-#include "easy_image.h"
 #include "ini_configuration.h"
 #include <stack>
+#include "easy_image.h"
 
 Matrix scaleFigure(double scale);
 
@@ -28,106 +28,117 @@ Matrix translate(const Vector3D &vector);
 Matrix eyePoint(const Vector3D &eyepoint);
 
 struct Face {
-	std::vector<int> point_indexes;
+    std::vector<int> point_indexes;
 
-	Face(const std::initializer_list<int> &point_indexes);
+    Face(const std::initializer_list<int> &point_indexes);
 
-	Face(std::vector<int> point_indexes);
+    Face(std::vector<int> point_indexes);
 
-	void triangulate(std::vector<Face> &faces);
+    void triangulate(std::vector<Face> &faces);
+
+    Face() = default;
 };
 
-class Figures;
+//class Figures;
 
 class Figure {
-	std::vector<Vector3D> points;
-	std::vector<Face> faces;
-	Color color;
+    std::vector<Vector3D> points;
+    std::vector<Face> faces;
+    Color ambient;
+    Color diffuse;
+    Color specular;
+    double reflectionCoefficient;
 
-	static void sort(std::vector<Face *> &faces, int index);
+    static void sort(std::vector<Face *> &faces, int index);
 
 public:
-	Figure &operator*=(const Matrix &matrix);
+    void setColor(const Color &a, const Color &d, const Color &s, double r);
 
-	Figure operator*(const Matrix &matrix) const;
+    const Color &getAmbient() const;
 
-	const std::vector<Vector3D> &getPoints() const;
+    const Color &getDiffuse() const;
 
-	const std::vector<Face> &getFaces() const;
+    const Color &getSpecular() const;
 
-	void setColor(const Color &newColor);
+    double getReflectionCoefficient() const;
 
-	const Color &getColor() const;
+    Figure &operator*=(const Matrix &matrix);
 
-	void addPoint(const Vector3D &vector);
+    Figure operator*(const Matrix &matrix) const;
 
-	void addFace(const Face &face);
+    const std::vector<Vector3D> &getPoints() const;
 
-	void deleteFace(int i);
+    const std::vector<Face> &getFaces() const;
 
-	void normalize();
+    void addPoint(const Vector3D &vector);
 
-	static Figure cube();
+    void addFace(const Face &face);
 
-	static Figure tetrahedron();
+    void normalize();
 
-	static Figure octahedron();
+    static Figure cube();
 
-	static Figure icosahedron();
+    static Figure tetrahedron();
 
-	static Figure buckyball();
+    static Figure octahedron();
 
-	static Figure dodecahedron();
+    static Figure icosahedron();
 
-	static Figure cylinder(int n, double height);
+    static Figure buckyball();
 
-	static Figure cone(int n, double height);
+    static Figure dodecahedron();
 
-	static Figure sphere(int n);
+    static Figure cylinder(int n, double height);
 
-	static Figure Torus(double R, double r, int n, int m);
+    static Figure cone(int n, double height);
+
+    static Figure sphere(int n);
+
+    static Figure Torus(double R, double r, int n, int m);
 
 //	static Figure mengerSponge(int iter);
 
-	Figure(const LParser::LSystem3D &lSystem);
+    Figure(const LParser::LSystem3D &lSystem);
 
-	void triangulate();
+    void triangulate();
 
-	Figure();
+    Figure();
 
 //	explicit Figure(Figures& figures, bool removeDoubleFaces);
 
-	void drawCharacter(unsigned int nr, Vector3D &start, Vector3D &H, Vector3D &L, Vector3D &U,
-					   const LParser::LSystem3D &lSystem, char character,
-					   std::stack<std::tuple<Vector3D, Vector3D, Vector3D, Vector3D, int>> &brackets,
-					   double angle,
-					   int &prevPoint);
+    void drawCharacter(unsigned int nr, Vector3D &start, Vector3D &H, Vector3D &L, Vector3D &U,
+                       const LParser::LSystem3D &lSystem, char character,
+                       std::stack<std::tuple<Vector3D, Vector3D, Vector3D, Vector3D, int>> &brackets, double angle,
+                       int &prevPoint);
 };
 
 class Figures {
-	std::forward_list<Figure> figures;
+    std::forward_list<Figure> figures;
 
-	static void mengerRec(Figures &figs, const int iter, const double scale, const Vector3D &corner);
+    static void mengerRec(Figures &figs, const int iter, const double scale, const Vector3D &corner);
+
 public:
-	Figures &operator*=(const Matrix &matrix);
+    void setColor(const Color &a, const Color &d, const Color &s, double r);
 
-	Figures &operator+=(Figures &&figs);
+    Figures &operator*=(const Matrix &matrix);
 
-	Figures operator*(const Matrix &matrix) const;
+    Figures &operator+=(Figures &&figs);
 
-	const std::forward_list<Figure> &getFigures() const;
+    Figures operator*(const Matrix &matrix) const;
 
-	void triangulate();
+    const std::forward_list<Figure> &getFigures() const;
 
-	void addFigure(Figure &&figure);
+    void triangulate();
 
-	img::EasyImage draw(unsigned int size, const Color &background) const;
+    void addFigure(Figure &&figure);
 
-	static Figures fractal(Figure &figure, int iter, double scale);
+    img::EasyImage draw(unsigned int size, const Color &background, const Lights &lights) const;
 
-	static Figures mengerSponge(int iter);
+    static Figures fractal(Figure &figure, int iter, double scale);
 
-	void setColor(const Color &newColor);
+    static void fractalRec(Figures &figs, const Figure &fig, int iter, double scale);
+
+    static Figures mengerSponge(int iter);
 
 //	friend Figure::Figure(Figures& figures, bool removeDoubleFaces);
 };
