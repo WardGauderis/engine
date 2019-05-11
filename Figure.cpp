@@ -605,7 +605,8 @@ double Figure::getReflectionCoefficient() const {
 //	color = figures.getFigures().front().getColor();
 //}
 
-img::EasyImage Figures::draw(unsigned int size, const Color &background, const Lights &lights) const {
+img::EasyImage
+Figures::draw(unsigned int size, const Color &background, const PointLights &point, const InfLights &inf) const {
     auto xMax = -DBL_MAX;
     auto xMin = DBL_MAX;
     auto yMax = -DBL_MAX;
@@ -634,7 +635,10 @@ img::EasyImage Figures::draw(unsigned int size, const Color &background, const L
     ZBuffer buffer(image.get_width(), image.get_height());
     image.clear(background);
     Color totalAmbient;
-    for (const auto &light: lights) {
+    for (const auto &light: point) {
+        totalAmbient += light.ambient;
+    }
+    for (const auto &light: inf) {
         totalAmbient += light.ambient;
     }
     for (const auto &figure: figures) {
@@ -646,7 +650,7 @@ img::EasyImage Figures::draw(unsigned int size, const Color &background, const L
                                 d, dx, dy,
                                 figure.getAmbient(), figure.getDiffuse(), figure.getSpecular(),
                                 figure.getReflectionCoefficient(),
-                                lights, totalAmbient);
+                                point, inf, totalAmbient);
         }
     }
     return image;

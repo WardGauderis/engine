@@ -132,7 +132,8 @@ public:
 
     void addFigure(Figure &&figure);
 
-    img::EasyImage draw(unsigned int size, const Color &background, const Lights &lights) const;
+    img::EasyImage
+    draw(unsigned int size, const Color &background, const PointLights &point, const InfLights &inf) const;
 
     static Figures fractal(Figure &figure, int iter, double scale);
 

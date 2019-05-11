@@ -262,9 +262,9 @@ img::EasyImage draw3D(const ini::Configuration &configuration, const render type
         getFigure(configuration, figures, name, ambient, diffuse, specular, coefficient);
     }
 
-    Lights lights;
+    PointLights point;
+    InfLights inf;
     if (type == lighted) {
-        lights.reserve(nrLights);
         for (int i = 0; i < nrLights; ++i) {
             const std::string name = "Light" + std::to_string(i);
             const bool infinity = configuration[name]["infinity"].as_bool_or_default(true);
@@ -277,19 +277,20 @@ img::EasyImage draw3D(const ini::Configuration &configuration, const render type
             if (infinity) {
                 std::vector<double> direction = {1, 1, 1};
                 if (configuration[name]["direction"].exists()) direction = configuration[name]["direction"];
-                lights.emplace_back(Light(ambient, diffuse, specular, Vector3D::vector(direction)));
+                inf.emplace_back(ambient, diffuse, specular, Vector3D::vector(direction));
             } else {
                 std::vector<double> location = {0, 0, 0};
                 if (configuration[name]["location"].exists()) location = configuration[name]["location"];
-                lights.emplace_back(Light(ambient, diffuse, specular, Vector3D::point(location)));
+                point.emplace_back(ambient, diffuse, specular, Vector3D::point(location));
             }
         }
     } else {
-        lights.emplace_back(Light{Color(1, 1, 1), Color(), Color(), Vector3D::vector({1, 1, 1})});
+        inf.emplace_back(Color(1, 1, 1), Color(), Color(), Vector3D::vector(1, 1, 1));
     }
 
     figures *= eye;
-    lights *= eye;
+    point *= eye;
+    inf *= eye;
     if (type == wire) {
         Lines2D lines = figures;
         return lines.draw((unsigned int) size, background, false);
@@ -298,7 +299,7 @@ img::EasyImage draw3D(const ini::Configuration &configuration, const render type
         return lines.draw((unsigned int) size, background, true);
     } else if (type == triangle or type == lighted) {
         figures.triangulate();
-        return figures.draw((unsigned int) size, background, lights);
+        return figures.draw((unsigned int) size, background, point, inf);
     }
     return img::EasyImage();
 }

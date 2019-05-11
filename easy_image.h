@@ -236,7 +236,8 @@ namespace img {
         void draw_triangle(ZBuffer &zBuffer, const Vector3D &a, const Vector3D &b, const Vector3D &c, double d,
                            double dx, double dy, const ::Color &ambient, const ::Color &diffuse,
                            const ::Color &specular,
-                           double coefficient, const Lights &lights, const ::Color &totalAmbient);
+                           double coefficient, const PointLights &points, const InfLights &infs,
+                           const ::Color &totalAmbient);
 
     private:
         friend std::istream &operator>>(std::istream &in, EasyImage &image);

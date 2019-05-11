@@ -416,7 +416,8 @@ void
 img::EasyImage::draw_triangle(ZBuffer &zBuffer, const Vector3D &a, const Vector3D &b, const Vector3D &c, double d,
                               double dx, double dy, const ::Color &ambient, const ::Color &diffuse,
                               const ::Color &specular,
-                              const double coefficient, const Lights &lights, const ::Color &totalAmbient) {
+                              const double coefficient, const PointLights &points, const InfLights &infs,
+                              const ::Color &totalAmbient) {
     struct point {
         double x;
         double y;
@@ -440,16 +441,14 @@ img::EasyImage::draw_triangle(ZBuffer &zBuffer, const Vector3D &a, const Vector3
 
     ::Color ambientAndInf = ambient * totalAmbient;
     Vector3D n = w / w.length();
-    std::vector<std::pair<double, Vector3D>> cosAndL;
-    cosAndL.reserve(lights.size());
+    std::vector<std::pair<double, Vector3D>> cosAndLInf;
+    cosAndLInf.reserve(infs.size());
     unsigned int i = 0;
-    for (const auto &light: lights) {
-        if (light.isInf()) {
-            const Vector3D l = -light.vector;
-            const double cosA = Vector3D::dot(n, l);
-            ambientAndInf += diffuse * light.diffuse * std::max(cosA, 0.0);
-            cosAndL[i] = {cosA, l};
-        }
+    for (const auto &light: infs) {
+        const Vector3D l = -light.direction;
+        const double cosA = Vector3D::dot(n, l);
+        ambientAndInf += diffuse * light.diffuse * std::max(cosA, 0.0);
+        cosAndLInf[i] = {cosA, l};
         i++;
     }
 
@@ -474,22 +473,24 @@ img::EasyImage::draw_triangle(ZBuffer &zBuffer, const Vector3D &a, const Vector3
         for (unsigned int x = xl; x <= xr; x++) {
             const double z = z2 + (x - xg) * dzdx;
             if (z <= zBuffer[y][x]) {
-
                 const double realX = -(x - dx) / (d * z);
                 const double realY = -(y - dy) / (d * z);
                 const Vector3D real = Vector3D::point(realX, realY, 1 / z);
                 ::Color pointAndSpec;
+                for (const auto &light: points) {
+                    Vector3D l = light.point - real;
+                    l.normalise();
+                    const double cosA = Vector3D::dot(n, l);
+                    pointAndSpec += diffuse * light.diffuse * std::max(cosA, 0.0);
+
+                    Vector3D r = 2 * cosA * n - l;
+                    const double cosB = Vector3D::dot(r, Vector3D::normalise(Vector3D::vector(-real)));
+                    pointAndSpec += specular * light.specular * pow(std::max(cosB, 0.0), coefficient);
+                }
                 i = 0;
-                for (const auto &light: lights) {
-                    if (!light.isInf()) {
-                        Vector3D l = light.vector - real;
-                        l.normalise();
-                        const double cosA = Vector3D::dot(n, l);
-                        pointAndSpec += diffuse * light.diffuse * std::max(cosA, 0.0);
-                        cosAndL[i] = {cosA, l};
-                    }
-                    double cosA = cosAndL[i].first;
-                    Vector3D l = cosAndL[i].second;
+                for (const auto &light: infs) {
+                    const double cosA = cosAndLInf[i].first;
+                    const Vector3D l = cosAndLInf[i].second;
                     Vector3D r = 2 * cosA * n - l;
                     const double cosB = Vector3D::dot(r, Vector3D::normalise(Vector3D::vector(-real)));
                     pointAndSpec += specular * light.specular * pow(std::max(cosB, 0.0), coefficient);
