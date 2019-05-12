@@ -355,9 +355,9 @@ img::EasyImage::draw_zbuf_line(ZBuffer &zBuffer, unsigned int x0, unsigned int y
             step = -step;
         }
         for (unsigned int i = y0; i <= y1; i++) {
-            if (1 / z < zBuffer[i][x0]) {
+            if (1 / z < zBuffer[x0][i]) {
                 (*this)(x0, i) = color;
-                zBuffer[i][x0] = 1 / z;
+                zBuffer[x0][i] = 1 / z;
             }
             z += step;
         }
@@ -369,9 +369,9 @@ img::EasyImage::draw_zbuf_line(ZBuffer &zBuffer, unsigned int x0, unsigned int y
             step = -step;
         }
         for (unsigned int i = x0; i <= x1; i++) {
-            if (1 / z <= zBuffer[y0][i]) {
+            if (1 / z <= zBuffer[i][y0]) {
                 (*this)(i, y0) = color;
-                zBuffer[y0][i] = 1 / z;
+                zBuffer[i][y0] = 1 / z;
             }
             z += step;
         }
@@ -386,25 +386,25 @@ img::EasyImage::draw_zbuf_line(ZBuffer &zBuffer, unsigned int x0, unsigned int y
         double m = ((double) y1 - (double) y0) / ((double) x1 - (double) x0);
         if (-1.0 <= m && m <= 1.0) {
             for (unsigned int i = 0; i <= (x1 - x0); i++) {
-                if (1 / z <= zBuffer[(unsigned int) round(y0 + m * i)][x0 + i]) {
+                if (1 / z <= zBuffer[x0 + i][(unsigned int) round(y0 + m * i)]) {
                     (*this)(x0 + i, (unsigned int) round(y0 + m * i)) = color;
-                    zBuffer[(unsigned int) round(y0 + m * i)][x0 + i] = 1 / z;
+                    zBuffer[x0 + i][(unsigned int) round(y0 + m * i)] = 1 / z;
                 }
                 z += step;
             }
         } else if (m > 1.0) {
             for (unsigned int i = 0; i <= (y1 - y0); i++) {
-                if (1 / z <= zBuffer[y0 + i][(unsigned int) round(x0 + (i / m))]) {
+                if (1 / z <= zBuffer[(unsigned int) round(x0 + (i / m))][y0 + i]) {
                     (*this)((unsigned int) round(x0 + (i / m)), y0 + i) = color;
-                    zBuffer[y0 + i][(unsigned int) round(x0 + (i / m))] = 1 / z;
+                    zBuffer[(unsigned int) round(x0 + (i / m))][y0 + i] = 1 / z;
                 }
                 z += step;
             }
         } else if (m < -1.0) {
             for (unsigned int i = 0; i <= (y0 - y1); i++) {
-                if (1 / z <= zBuffer[y0 - i][(unsigned int) round(x0 - (i / m))]) {
+                if (1 / z <= zBuffer[(unsigned int) round(x0 - (i / m))][y0 - i]) {
                     (*this)((unsigned int) round(x0 - (i / m)), y0 - i) = color;
-                    zBuffer[y0 - i][(unsigned int) round(x0 - (i / m))] = 1 / z;
+                    zBuffer[(unsigned int) round(x0 - (i / m))][y0 - i] = 1 / z;
                 }
                 z += step;
             }
@@ -414,9 +414,12 @@ img::EasyImage::draw_zbuf_line(ZBuffer &zBuffer, unsigned int x0, unsigned int y
 
 void
 img::EasyImage::draw_triangle(ZBuffer &zBuffer, const Vector3D &a, const Vector3D &b, const Vector3D &c, double d,
-                              double dx, double dy, const ::Color &ambient, const ::Color &diffuse,
-                              const ::Color &specular,
-                              const double coefficient, const Lights &lights, const ::Color &totalAmbient) {
+                              double dx, double dy,
+                              const ::Color &ambient, const ::Color &diffuse, const ::Color &specular,
+                              const double coefficient,
+                              const PointLights &points, const InfLights &infs, const ::Color &totalAmbient,
+                              const Matrix &eye,
+                              const bool shadows) {
     struct point {
         double x;
         double y;
@@ -436,20 +439,18 @@ img::EasyImage::draw_triangle(ZBuffer &zBuffer, const Vector3D &a, const Vector3
     const double k = w.x * a.x + w.y * a.y + w.z * a.z;
     const double dzdx = w.x / (-d * k);
     const double dzdy = w.y / (-d * k);
-    const double z1 = 1.0001 * (zg);
+    const double z1 = (shadows ? 1 : 1.0001) * zg;
 
     ::Color ambientAndInf = ambient * totalAmbient;
     Vector3D n = w / w.length();
-    std::vector<std::pair<double, Vector3D>> cosAndL;
-    cosAndL.reserve(lights.size());
+    std::vector<std::pair<double, Vector3D>> cosAndLInf;
+    cosAndLInf.reserve(infs.size());
     unsigned int i = 0;
-    for (const auto &light: lights) {
-        if (light.isInf()) {
-            const Vector3D l = -light.vector;
-            const double cosA = Vector3D::dot(n, l);
-            ambientAndInf += diffuse * light.diffuse * std::max(cosA, 0.0);
-            cosAndL[i] = {cosA, l};
-        }
+    for (const auto &light: infs) {
+        const Vector3D l = -light.direction;
+        const double cosA = Vector3D::dot(n, l);
+        ambientAndInf += diffuse * light.diffuse * std::max(cosA, 0.0);
+        cosAndLInf[i] = {cosA, l};
         i++;
     }
 
@@ -473,30 +474,198 @@ img::EasyImage::draw_triangle(ZBuffer &zBuffer, const Vector3D &a, const Vector3
         const unsigned int xr = static_cast<int>(round(*std::max_element(xR.begin(), xR.end()) - 0.5));
         for (unsigned int x = xl; x <= xr; x++) {
             const double z = z2 + (x - xg) * dzdx;
-            if (z <= zBuffer[y][x]) {
-
+            if (z <= zBuffer[x][y]) {
                 const double realX = -(x - dx) / (d * z);
                 const double realY = -(y - dy) / (d * z);
                 const Vector3D real = Vector3D::point(realX, realY, 1 / z);
+
                 ::Color pointAndSpec;
-                i = 0;
-                for (const auto &light: lights) {
-                    if (!light.isInf()) {
-                        Vector3D l = light.vector - real;
+                for (const auto &light: points) {
+                    bool noShadow = true;
+                    if (shadows) {
+                        const Vector3D shadow = real * Matrix::inv(eye) * light.eye;
+                        const double mappedX = (light.d * shadow.x / -shadow.z) + light.dx;
+                        const double mappedY = (light.d * shadow.y / -shadow.z) + light.dy;
+                        const double alphaX = mappedX - floor(mappedX);
+                        const double alphaY = mappedY - floor(mappedY);
+                        const double zA = light.shadowMask[floor(mappedX)][ceil(mappedY)];
+                        const double zB = light.shadowMask[ceil(mappedX)][ceil(mappedY)];
+                        const double zC = light.shadowMask[floor(mappedX)][floor(mappedY)];
+                        const double zD = light.shadowMask[ceil(mappedX)][floor(mappedY)];
+                        const double zE = (1 - alphaX) * zA + alphaX * zB;
+                        const double zF = (1 - alphaX) * zC + alphaX * zD;
+                        const double zMask = alphaY * zE + (1 - alphaY) * zF;
+                        noShadow = abs(zMask - 1 / shadow.z) < pow(10, -5);
+                    }
+                    if (noShadow) {
+                        Vector3D l = light.location - real;
                         l.normalise();
                         const double cosA = Vector3D::dot(n, l);
                         pointAndSpec += diffuse * light.diffuse * std::max(cosA, 0.0);
-                        cosAndL[i] = {cosA, l};
+
+                        Vector3D r = 2 * cosA * n - l;
+                        const double cosB = Vector3D::dot(r, Vector3D::normalise(Vector3D::vector(-real)));
+                        pointAndSpec += specular * light.specular * pow(std::max(cosB, 0.0), coefficient);
                     }
-                    double cosA = cosAndL[i].first;
-                    Vector3D l = cosAndL[i].second;
+                }
+
+                i = 0;
+                for (const auto &light: infs) {
+                    const double cosA = cosAndLInf[i].first;
+                    const Vector3D l = cosAndLInf[i].second;
                     Vector3D r = 2 * cosA * n - l;
                     const double cosB = Vector3D::dot(r, Vector3D::normalise(Vector3D::vector(-real)));
                     pointAndSpec += specular * light.specular * pow(std::max(cosB, 0.0), coefficient);
                     i++;
                 }
+
                 (*this)(x, y) = ambientAndInf + pointAndSpec;
-                zBuffer[y][x] = z;
+                zBuffer[x][y] = z;
+            }
+        }
+    }
+}
+
+void img::EasyImage::draw_textured_triangle(ZBuffer &zBuffer, const Vector3D &a, const Vector3D &b, const Vector3D &c,
+                                            double d, double dx, double dy, const img::EasyImage &texture,
+                                            const double coefficient, const PointLights &points,
+                                            const InfLights &infs, const ::Color &totalAmbient, const Matrix &eye,
+                                            const bool shadows, const Vector3D &pTex, const Vector3D &aTex,
+                                            const Vector3D &bTex) {
+    struct point {
+        double x;
+        double y;
+    } const A{(d * a.x / -a.z) + dx, (d * a.y / -a.z) + dy}, B{(d * b.x / -b.z) + dx, (d * b.y / -b.z) + dy}, C{
+            (d * c.x / -c.z) + dx, (d * c.y / -c.z) + dy};
+    assert(A.x < this->width && A.y < this->height);
+    assert(B.x < this->width && B.y < this->height);
+    assert(C.x < this->width && C.y < this->height);
+    const unsigned int ymin = static_cast<int>(round(std::min(std::min(A.y, B.y), C.y) + 0.5));
+    const unsigned int ymax = static_cast<int>(round(std::max(std::max(A.y, B.y), C.y) - 0.5));
+    const double xg = (A.x + B.x + C.x) / 3;
+    const double yg = (A.y + B.y + C.y) / 3;
+    const double zg = 1.0 / (3 * a.z) + 1.0 / (3 * b.z) + 1.0 / (3 * c.z);
+    const Vector3D u = b - a;
+    const Vector3D v = c - a;
+    const Vector3D w = Vector3D::cross(u, v);
+    const double k = w.x * a.x + w.y * a.y + w.z * a.z;
+    const double dzdx = w.x / (-d * k);
+    const double dzdy = w.y / (-d * k);
+    const double z1 = (shadows ? 1 : 1.0001) * zg;
+
+    Vector3D cTex = Vector3D::cross(aTex, bTex);
+    Matrix abcTex;
+    abcTex(1, 1) = aTex.x;
+    abcTex(1, 2) = aTex.y;
+    abcTex(1, 3) = aTex.z;
+    abcTex(2, 1) = bTex.x;
+    abcTex(2, 2) = bTex.y;
+    abcTex(2, 3) = bTex.z;
+    abcTex(3, 1) = cTex.x;
+    abcTex(3, 2) = cTex.y;
+    abcTex(3, 3) = cTex.z;
+    abcTex.inv();
+
+    Vector3D n = w / w.length();
+    std::vector<std::pair<double, Vector3D>> cosAndLInf;
+    cosAndLInf.reserve(infs.size());
+    unsigned int i = 0;
+    for (const auto &light: infs) {
+        const Vector3D l = -light.direction;
+        const double cosA = Vector3D::dot(n, l);
+        cosAndLInf[i] = {cosA, l};
+        i++;
+    }
+
+    for (unsigned int y = ymin; y <= ymax; y++) {
+        const double z2 = z1 + (y - yg) * dzdy;
+        std::vector<double> xL;
+        xL.resize(3, DBL_MAX);
+        std::vector<double> xR;
+        xR.resize(3, -DBL_MAX);
+        const std::vector<std::pair<const point *, const point *>> edges = {{&A, &B},
+                                                                            {&A, &C},
+                                                                            {&B, &C}};
+        for (unsigned int j = 0; j < edges.size(); j++) {
+            auto P = edges[j].first;
+            auto Q = edges[j].second;
+            if ((y - P->y) * (y - Q->y) <= 0 && P->y != Q->y) {
+                xL[j] = xR[j] = Q->x + (P->x - Q->x) * ((y - Q->y) / (P->y - Q->y));
+            }
+        }
+        const unsigned int xl = static_cast<int>(round(*std::min_element(xL.begin(), xL.end()) + 0.5));
+        const unsigned int xr = static_cast<int>(round(*std::max_element(xR.begin(), xR.end()) - 0.5));
+        for (unsigned int x = xl; x <= xr; x++) {
+            const double z = z2 + (x - xg) * dzdx;
+            if (z <= zBuffer[x][y]) {
+                const double realX = -(x - dx) / (d * z);
+                const double realY = -(y - dy) / (d * z);
+                const Vector3D real = Vector3D::point(realX, realY, 1 / z);
+
+                Vector3D mapped = (real - pTex) * abcTex;
+                double xTex = (1 + (texture.get_width() - 1) * mapped.x);
+                xTex = fmod(fmod(xTex, texture.width) + texture.width, texture.width);
+                double yTex = (1 + (texture.get_height() - 1) * mapped.y);
+                yTex = fmod(fmod(yTex, texture.height) + texture.height, texture.height);
+
+                const double deltaX = xTex - floor(xTex);
+                const double deltaY = yTex - floor(yTex);
+                const Color tempA = texture(int(floor(xTex)) % texture.width, int(ceil(yTex)) % texture.height);
+                const Color tempB = texture(int(ceil(xTex)) % texture.width, int(ceil(yTex)) % texture.height);
+                const Color tempC = texture(int(floor(xTex)) % texture.width, int(floor(yTex)) % texture.height);
+                const Color tempD = texture(int(ceil(xTex)) % texture.width, int(floor(yTex)) % texture.height);
+                const ::Color colA(tempA.red / 255.0, tempA.green / 255.0, tempA.blue / 255.0);
+                const ::Color colB(tempB.red / 255.0, tempB.green / 255.0, tempB.blue / 255.0);
+                const ::Color colC(tempC.red / 255.0, tempC.green / 255.0, tempC.blue / 255.0);
+                const ::Color colD(tempD.red / 255.0, tempD.green / 255.0, tempD.blue / 255.0);
+                const ::Color colE = colA * (1 - deltaX) + colB * deltaX;
+                const ::Color colF = colC * (1 - deltaX) + colD * deltaX;
+                const ::Color final = colE * deltaY + colF * (1 - deltaY);
+
+                ::Color pointAndSpec;
+                for (const auto &light: points) {
+                    bool noShadow = true;
+                    if (shadows) {
+                        const Vector3D shadow = real * Matrix::inv(eye) * light.eye;
+                        const double mappedX = (light.d * shadow.x / -shadow.z) + light.dx;
+                        const double mappedY = (light.d * shadow.y / -shadow.z) + light.dy;
+                        const double alphaX = mappedX - floor(mappedX);
+                        const double alphaY = mappedY - floor(mappedY);
+                        const double zA = light.shadowMask[floor(mappedX)][ceil(mappedY)];
+                        const double zB = light.shadowMask[ceil(mappedX)][ceil(mappedY)];
+                        const double zC = light.shadowMask[floor(mappedX)][floor(mappedY)];
+                        const double zD = light.shadowMask[ceil(mappedX)][floor(mappedY)];
+                        const double zE = (1 - alphaX) * zA + alphaX * zB;
+                        const double zF = (1 - alphaX) * zC + alphaX * zD;
+                        const double zMask = alphaY * zE + (1 - alphaY) * zF;
+                        noShadow = abs(zMask - 1 / shadow.z) < pow(10, -5);
+                    }
+                    if (noShadow) {
+                        Vector3D l = light.location - real;
+                        l.normalise();
+                        const double cosA = Vector3D::dot(n, l);
+                        pointAndSpec += final * light.diffuse * std::max(cosA, 0.0);
+
+                        Vector3D r = 2 * cosA * n - l;
+                        const double cosB = Vector3D::dot(r, Vector3D::normalise(Vector3D::vector(-real)));
+                        pointAndSpec += final * light.specular * pow(std::max(cosB, 0.0), coefficient);
+                    }
+                }
+
+                ::Color ambientAndInf = final * totalAmbient;
+                i = 0;
+                for (const auto &light: infs) {
+                    const double cosA = cosAndLInf[i].first;
+                    const Vector3D l = cosAndLInf[i].second;
+                    Vector3D r = 2 * cosA * n - l;
+                    const double cosB = Vector3D::dot(r, Vector3D::normalise(Vector3D::vector(-real)));
+                    pointAndSpec += final * light.specular * pow(std::max(cosB, 0.0), coefficient);
+                    ambientAndInf += final * light.diffuse * std::max(cosA, 0.0);
+                    i++;
+                }
+
+                (*this)(x, y) = ambientAndInf + pointAndSpec;
+                zBuffer[x][y] = z;
             }
         }
     }

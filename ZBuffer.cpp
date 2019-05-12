@@ -10,8 +10,8 @@
 #include <limits>
 
 ZBuffer::ZBuffer(const unsigned int width, const unsigned int height) {
-	resize(height);
+	resize(width);
 	for (auto &row: *this) {
-		row.resize(width, std::numeric_limits<double>::infinity());
+		row.resize(height, std::numeric_limits<double>::infinity());
 	}
 }

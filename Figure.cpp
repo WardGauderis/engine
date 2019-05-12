@@ -9,6 +9,8 @@
 #include <cfloat>
 #include "Figure.h"
 #include <algorithm>
+#include <fstream>
+#include <assert.h>
 
 Matrix scaleFigure(const double scale) {
     Matrix scaler;
@@ -79,6 +81,9 @@ Figure &Figure::operator*=(const Matrix &matrix) {
     for (auto &point: points) {
         point *= matrix;
     }
+    p *= matrix;
+    a *= matrix;
+    b *= matrix;
     return *this;
 }
 
@@ -501,6 +506,33 @@ double Figure::getReflectionCoefficient() const {
     return reflectionCoefficient;
 }
 
+void Figure::setTexture(const std::string &tex, const Vector3D &pos, const Vector3D &x, const Vector3D &y) {
+    texture = tex;
+    p = pos;
+    a = x;
+    b = y;
+}
+
+bool Figure::isTextured() const {
+    return texture != "";
+}
+
+const std::string &Figure::getTexture() const {
+    return texture;
+}
+
+const Vector3D &Figure::getP() const {
+    return p;
+}
+
+const Vector3D &Figure::getA() const {
+    return a;
+}
+
+const Vector3D &Figure::getB() const {
+    return b;
+}
+
 
 ////Figure Figure::mengerSponge(const int iter) {
 ////	Figures menger;
@@ -605,48 +637,53 @@ double Figure::getReflectionCoefficient() const {
 //	color = figures.getFigures().front().getColor();
 //}
 
-img::EasyImage Figures::draw(unsigned int size, const Color &background, const Lights &lights) const {
-    auto xMax = -DBL_MAX;
-    auto xMin = DBL_MAX;
-    auto yMax = -DBL_MAX;
-    auto yMin = DBL_MAX;
-
-    for (const auto &figure: figures) {
-        for (const auto &point: figure.getPoints()) {
-            const double x = (point.x) / (-point.z);
-            const double y = (point.y) / (-point.z);
-            if (x > xMax) xMax = x;
-            if (x < xMin) xMin = x;
-            if (y > yMax) yMax = y;
-            if (y < yMin) yMin = y;
-        }
-    }
-    const double xRange = xMax - xMin;
-    const double yRange = yMax - yMin;
-    const double xImage = size * (xRange / (std::max(xRange, yRange)));
-    const double yImage = size * (yRange / (std::max(xRange, yRange)));
-    const double d = 0.95 * xImage / xRange;
-    const double DCx = d * ((xMin + xMax) / 2);
-    const double DCy = d * ((yMin + yMax) / 2);
-    const double dx = (xImage / 2) - DCx;
-    const double dy = (yImage / 2) - DCy;
+img::EasyImage Figures::draw(unsigned int size, const Color &background, const PointLights &point, const InfLights &inf,
+                             const Matrix &eye, const bool shadows) const {
+    const auto values = calculateValues(size);
+    const double d = std::get<0>(values);
+    const double dx = std::get<1>(values);
+    const double dy = std::get<2>(values);
+    const double xImage = std::get<3>(values);
+    const double yImage = std::get<4>(values);
     img::EasyImage image(static_cast<unsigned int>(round(xImage)), static_cast<unsigned int>(round(yImage)));
     ZBuffer buffer(image.get_width(), image.get_height());
     image.clear(background);
     Color totalAmbient;
-    for (const auto &light: lights) {
+    for (const auto &light: point) {
+        totalAmbient += light.ambient;
+    }
+    for (const auto &light: inf) {
         totalAmbient += light.ambient;
     }
     for (const auto &figure: figures) {
-        for (const auto &triangle: figure.getFaces()) {
-            image.draw_triangle(buffer,
-                                figure.getPoints()[triangle.point_indexes[0]],
-                                figure.getPoints()[triangle.point_indexes[1]],
-                                figure.getPoints()[triangle.point_indexes[2]],
-                                d, dx, dy,
-                                figure.getAmbient(), figure.getDiffuse(), figure.getSpecular(),
-                                figure.getReflectionCoefficient(),
-                                lights, totalAmbient);
+        if (figure.isTextured()) {
+            std::ifstream fin(figure.getTexture());
+            assert(fin.is_open());
+            img::EasyImage texture;
+            fin >> texture;
+            fin.close();
+            for (const auto &triangle: figure.getFaces()) {
+                image.draw_textured_triangle(buffer,
+                                             figure.getPoints()[triangle.point_indexes[0]],
+                                             figure.getPoints()[triangle.point_indexes[1]],
+                                             figure.getPoints()[triangle.point_indexes[2]],
+                                             d, dx, dy,
+                                             texture,
+                                             figure.getReflectionCoefficient(),
+                                             point, inf, totalAmbient, eye, shadows,
+                                             figure.getP(), figure.getA(), figure.getB());
+            }
+        } else {
+            for (const auto &triangle: figure.getFaces()) {
+                image.draw_triangle(buffer,
+                                    figure.getPoints()[triangle.point_indexes[0]],
+                                    figure.getPoints()[triangle.point_indexes[1]],
+                                    figure.getPoints()[triangle.point_indexes[2]],
+                                    d, dx, dy,
+                                    figure.getAmbient(), figure.getDiffuse(), figure.getSpecular(),
+                                    figure.getReflectionCoefficient(),
+                                    point, inf, totalAmbient, eye, shadows);
+            }
         }
     }
     return image;
@@ -756,6 +793,107 @@ void Figures::setColor(const Color &a, const Color &d, const Color &s, double r)
         figure.setColor(a, d, s, r);
     }
 }
+
+std::tuple<double, double, double, double, double> Figures::calculateValues(const unsigned int size) const {
+    auto xMax = -DBL_MAX;
+    auto xMin = DBL_MAX;
+    auto yMax = -DBL_MAX;
+    auto yMin = DBL_MAX;
+
+    for (const auto &figure: figures) {
+        for (const auto &point: figure.getPoints()) {
+            const double x = (point.x) / (-point.z);
+            const double y = (point.y) / (-point.z);
+            if (x > xMax) xMax = x;
+            if (x < xMin) xMin = x;
+            if (y > yMax) yMax = y;
+            if (y < yMin) yMin = y;
+        }
+    }
+    const double xRange = xMax - xMin;
+    const double yRange = yMax - yMin;
+    const double xImage = size * (xRange / (std::max(xRange, yRange)));
+    const double yImage = size * (yRange / (std::max(xRange, yRange)));
+    const double d = 0.95 * xImage / xRange;
+    const double DCx = d * ((xMin + xMax) / 2);
+    const double DCy = d * ((yMin + yMax) / 2);
+    const double dx = (xImage / 2) - DCx;
+    const double dy = (yImage / 2) - DCy;
+    return {d, dx, dy, xImage, yImage};
+}
+
+void Figures::generateShadowMasks(PointLights &points, const unsigned int size) {
+    for (auto &light: points) {
+        light.eye = eyePoint(light.location);
+        *this *= light.eye;
+        const auto values = calculateValues(size);
+        light.d = std::get<0>(values);
+        light.dx = std::get<1>(values);
+        light.dy = std::get<2>(values);
+        const double xImage = std::get<3>(values);
+        const double yImage = std::get<4>(values);
+        light.shadowMask = ZBuffer(static_cast<unsigned int>(round(xImage)), static_cast<unsigned int>(round(yImage)));
+
+        for (const auto &figure: getFigures()) {
+            for (const auto &triangle: figure.getFaces()) {
+                const auto a = figure.getPoints()[triangle.point_indexes[0]];
+                const auto b = figure.getPoints()[triangle.point_indexes[1]];
+                const auto c = figure.getPoints()[triangle.point_indexes[2]];
+                struct point {
+                    double x;
+                    double y;
+                } const A{(light.d * a.x / -a.z) + light.dx, (light.d * a.y / -a.z) + light.dy}, B{
+                        (light.d * b.x / -b.z) + light.dx,
+                        (light.d * b.y / -b.z) + light.dy}, C{
+                        (light.d * c.x / -c.z) + light.dx, (light.d * c.y / -c.z) + light.dy};
+                const unsigned int ymin = static_cast<int>(round(std::min(std::min(A.y, B.y), C.y) + 0.5));
+                const unsigned int ymax = static_cast<int>(round(std::max(std::max(A.y, B.y), C.y) - 0.5));
+                const double xg = (A.x + B.x + C.x) / 3;
+                const double yg = (A.y + B.y + C.y) / 3;
+                const double zg = 1.0 / (3 * a.z) + 1.0 / (3 * b.z) + 1.0 / (3 * c.z);
+                const Vector3D u = b - a;
+                const Vector3D v = c - a;
+                const Vector3D w = Vector3D::cross(u, v);
+                const double k = w.x * a.x + w.y * a.y + w.z * a.z;
+                const double dzdx = w.x / (-light.d * k);
+                const double dzdy = w.y / (-light.d * k);
+                const double z1 = zg;
+
+                for (unsigned int y = ymin; y <= ymax; y++) {
+                    const double z2 = z1 + (y - yg) * dzdy;
+                    std::vector<double> xL;
+                    xL.resize(3, DBL_MAX);
+                    std::vector<double> xR;
+                    xR.resize(3, -DBL_MAX);
+                    const std::vector<std::pair<const point *, const point *>> edges = {{&A, &B},
+                                                                                        {&A, &C},
+                                                                                        {&B, &C}};
+                    for (unsigned int j = 0; j < edges.size(); j++) {
+                        auto P = edges[j].first;
+                        auto Q = edges[j].second;
+                        if ((y - P->y) * (y - Q->y) <= 0 && P->y != Q->y) {
+                            xL[j] = xR[j] = Q->x + (P->x - Q->x) * ((y - Q->y) / (P->y - Q->y));
+                        }
+                    }
+                    const unsigned int xl = static_cast<int>(round(*std::min_element(xL.begin(), xL.end()) + 0.5));
+                    const unsigned int xr = static_cast<int>(round(*std::max_element(xR.begin(), xR.end()) - 0.5));
+                    for (unsigned int x = xl; x <= xr; x++) {
+                        const double z = z2 + (x - xg) * dzdx;
+                        if (z <= light.shadowMask[x][y]) light.shadowMask[x][y] = z;
+                    }
+                }
+            }
+        }
+        *this *= Matrix::inv(light.eye);
+    }
+}
+
+void Figures::setTexture(const std::string &tex, const Vector3D &pos, const Vector3D &x, const Vector3D &y) {
+    for (auto &figure: figures) {
+        figure.setTexture(tex, pos, x, y);
+    }
+}
+
 
 Face::Face(
         const std::initializer_list<int> &point_indexes) : point_indexes(point_indexes) {}

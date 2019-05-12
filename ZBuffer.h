@@ -13,8 +13,9 @@
 
 class ZBuffer : public std::vector<std::vector<double>> {
 public:
+    ZBuffer() = default;
 
-	ZBuffer(unsigned int width, unsigned int height);
+    ZBuffer(unsigned int width, unsigned int height);
 };
 
 
