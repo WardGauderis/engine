@@ -22,15 +22,15 @@ struct  Color {
     }
 
     Color(const std::vector<double> &color) {
-        red = std::max(std::min(color[0], 1.0), 0.0);
-        green = std::max(std::min(color[1], 1.0), 0.0);
-        blue = std::max(std::min(color[2], 1.0), 0.0);
+        red = color[0];
+        green = color[1];
+        blue = color[2];
     }
 
     Color(const double r, const double g, const double b) {
-        red = std::max(std::min(r, 1.0), 0.0);
-        green = std::max(std::min(g, 1.0), 0.0);
-        blue = std::max(std::min(b, 1.0), 0.0);
+        red = r;
+        green = g;
+        blue = b;
     }
 
     bool operator<(const Color &comp) const {
@@ -45,9 +45,6 @@ struct  Color {
         red += color.red;
         green += color.green;
         blue += color.blue;
-        red = std::max(std::min(red, 1.0), 0.0);
-        green = std::max(std::min(green, 1.0), 0.0);
-        blue = std::max(std::min(blue, 1.0), 0.0);
         return *this;
     }
 
@@ -61,9 +58,6 @@ struct  Color {
         red *= color.red;
         green *= color.green;
         blue *= color.blue;
-        red = std::max(std::min(red, 1.0), 0.0);
-        green = std::max(std::min(green, 1.0), 0.0);
-        blue = std::max(std::min(blue, 1.0), 0.0);
         return *this;
     }
 
@@ -77,9 +71,6 @@ struct  Color {
         red *= value;
         green *= value;
         blue *= value;
-        red = std::max(std::min(red, 1.0), 0.0);
-        green = std::max(std::min(green, 1.0), 0.0);
-        blue = std::max(std::min(blue, 1.0), 0.0);
         return *this;
     }
 

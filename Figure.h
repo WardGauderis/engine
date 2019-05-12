@@ -7,7 +7,6 @@
 #ifndef ENGINE_CMAKE_FIGURE_H
 #define ENGINE_CMAKE_FIGURE_H
 
-#include <vector>
 #include <forward_list>
 #include "l_parser/l_parser.h"
 #include "vector/vector3d.h"
@@ -48,10 +47,26 @@ class Figure {
     Color diffuse;
     Color specular;
     double reflectionCoefficient;
+    std::string texture;
+    Vector3D p;
+    Vector3D a;
+    Vector3D b;
 
     static void sort(std::vector<Face *> &faces, int index);
 
 public:
+    const std::string &getTexture() const;
+
+    const Vector3D &getP() const;
+
+    const Vector3D &getA() const;
+
+    const Vector3D &getB() const;
+
+    bool isTextured() const;
+
+    void setTexture(const std::string &tex, const Vector3D &pos, const Vector3D &x, const Vector3D &y);
+
     void setColor(const Color &a, const Color &d, const Color &s, double r);
 
     const Color &getAmbient() const;
@@ -118,6 +133,8 @@ class Figures {
     static void mengerRec(Figures &figs, const int iter, const double scale, const Vector3D &corner);
 
 public:
+    void setTexture(const std::string &tex, const Vector3D &pos, const Vector3D &x, const Vector3D &y);
+
     void setColor(const Color &a, const Color &d, const Color &s, double r);
 
     Figures &operator*=(const Matrix &matrix);
@@ -132,14 +149,19 @@ public:
 
     void addFigure(Figure &&figure);
 
+    std::tuple<double, double, double, double, double> calculateValues(unsigned int size) const;
+
     img::EasyImage
-    draw(unsigned int size, const Color &background, const PointLights &point, const InfLights &inf) const;
+    draw(unsigned int size, const Color &background, const PointLights &point, const InfLights &inf, const Matrix &eye,
+         bool shadows) const;
 
     static Figures fractal(Figure &figure, int iter, double scale);
 
     static void fractalRec(Figures &figs, const Figure &fig, int iter, double scale);
 
     static Figures mengerSponge(int iter);
+
+    void generateShadowMasks(PointLights &points, unsigned int size);
 
 //	friend Figure::Figure(Figures& figures, bool removeDoubleFaces);
 };

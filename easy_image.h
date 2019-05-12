@@ -75,9 +75,9 @@ namespace img {
         ~Color();
 
         Color(const ::Color &color) {
-            red = static_cast<uint8_t>(round(color.red * 255));
-            green = static_cast<uint8_t>(round(color.green * 255));
-            blue = static_cast<uint8_t>(round(color.blue * 255));
+            red = static_cast<uint8_t>(round(std::min(std::max(color.red, 0.0), 1.0) * 255));
+            green = static_cast<uint8_t>(round(std::min(std::max(color.green, 0.0), 1.0) * 255));
+            blue = static_cast<uint8_t>(round(std::min(std::max(color.blue, 0.0), 1.0) * 255));
         }
     };
 
@@ -230,14 +230,20 @@ namespace img {
 
         void
         draw_zbuf_line(ZBuffer &zBuffer, unsigned int x0, unsigned int y0, double z0, unsigned int x1, unsigned int y1,
-                       double z1,
-                       Color color);
+                       double z1, Color color);
 
-        void draw_triangle(ZBuffer &zBuffer, const Vector3D &a, const Vector3D &b, const Vector3D &c, double d,
-                           double dx, double dy, const ::Color &ambient, const ::Color &diffuse,
-                           const ::Color &specular,
-                           double coefficient, const PointLights &points, const InfLights &infs,
-                           const ::Color &totalAmbient);
+        void
+        draw_triangle(ZBuffer &zBuffer, const Vector3D &a, const Vector3D &b, const Vector3D &c, double d, double dx,
+                      double dy, const ::Color &ambient, const ::Color &diffuse, const ::Color &specular,
+                      double coefficient, const PointLights &points, const InfLights &infs,
+                      const ::Color &totalAmbient, const Matrix &eye, bool shadows);
+
+        void draw_textured_triangle(ZBuffer &zBuffer, const Vector3D &a, const Vector3D &b, const Vector3D &c,
+                                    double d, double dx, double dy, const img::EasyImage &texture,
+                                    double coefficient, const PointLights &points,
+                                    const InfLights &infs, const ::Color &totalAmbient, const Matrix &eye,
+                                    bool shadows, const Vector3D &pTex, const Vector3D &aTex,
+                                    const Vector3D &bTex);
 
     private:
         friend std::istream &operator>>(std::istream &in, EasyImage &image);

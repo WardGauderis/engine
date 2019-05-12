@@ -118,7 +118,8 @@ img::EasyImage lSystem2D(const ini::Configuration &configuration) {
 }
 
 void getFigure(const ini::Configuration &configuration, Figures &figures, const std::string &name, const Color &ambient,
-               const Color &diffuse, const Color &specular, const double coefficient) {
+               const Color &diffuse, const Color &specular, const double coefficient, const std::string &texture,
+               const Vector3D &p, const Vector3D &a, const Vector3D &b) {
     std::string figureType = configuration[name]["type"];
     double scale = configuration[name]["scale"];
     double x = M_PI * configuration[name]["rotateX"].as_double_or_default(0) / 180;
@@ -181,6 +182,7 @@ void getFigure(const ini::Configuration &configuration, Figures &figures, const 
         Figure temp = Figure::cube();
         temp *= scaleFigure(scale) * rotateX(x) * rotateY(y) * rotateZ(z) * translate(center);
         temp.setColor(ambient, diffuse, specular, coefficient);
+        temp.setTexture(texture, p, a, b);
         figures += Figures::fractal(temp, nrIterations, fractalScale);
     } else if (figureType == "FractalTetrahedron") {
         const int nrIterations = configuration[name]["nrIterations"];
@@ -188,6 +190,7 @@ void getFigure(const ini::Configuration &configuration, Figures &figures, const 
         Figure temp = Figure::tetrahedron();
         temp *= scaleFigure(scale) * rotateX(x) * rotateY(y) * rotateZ(z) * translate(center);
         temp.setColor(ambient, diffuse, specular, coefficient);
+        temp.setTexture(texture, p, a, b);
         figures += Figures::fractal(temp, nrIterations, fractalScale);
     } else if (figureType == "FractalOctahedron") {
         const int nrIterations = configuration[name]["nrIterations"];
@@ -195,6 +198,7 @@ void getFigure(const ini::Configuration &configuration, Figures &figures, const 
         Figure temp = Figure::octahedron();
         temp *= scaleFigure(scale) * rotateX(x) * rotateY(y) * rotateZ(z) * translate(center);
         temp.setColor(ambient, diffuse, specular, coefficient);
+        temp.setTexture(texture, p, a, b);
         figures += Figures::fractal(temp, nrIterations, fractalScale);
     } else if (figureType == "FractalIcosahedron") {
         const int nrIterations = configuration[name]["nrIterations"];
@@ -202,6 +206,7 @@ void getFigure(const ini::Configuration &configuration, Figures &figures, const 
         Figure temp = Figure::icosahedron();
         temp *= scaleFigure(scale) * rotateX(x) * rotateY(y) * rotateZ(z) * translate(center);
         temp.setColor(ambient, diffuse, specular, coefficient);
+        temp.setTexture(texture, p, a, b);
         figures += Figures::fractal(temp, nrIterations, fractalScale);
     } else if (figureType == "FractalBuckyBall") {
         const int nrIterations = configuration[name]["nrIterations"];
@@ -209,6 +214,7 @@ void getFigure(const ini::Configuration &configuration, Figures &figures, const 
         Figure temp = Figure::buckyball();
         temp *= scaleFigure(scale) * rotateX(x) * rotateY(y) * rotateZ(z) * translate(center);
         temp.setColor(ambient, diffuse, specular, coefficient);
+        temp.setTexture(texture, p, a, b);
         figures += Figures::fractal(temp, nrIterations, fractalScale);
     } else if (figureType == "FractalDodecahedron") {
         const int nrIterations = configuration[name]["nrIterations"];
@@ -216,6 +222,7 @@ void getFigure(const ini::Configuration &configuration, Figures &figures, const 
         Figure temp = Figure::dodecahedron();
         temp *= scaleFigure(scale) * rotateX(x) * rotateY(y) * rotateZ(z) * translate(center);
         temp.setColor(ambient, diffuse, specular, coefficient);
+        temp.setTexture(texture, p, a, b);
         figures += Figures::fractal(temp, nrIterations, fractalScale);
     } else if (figureType == "MengerSponge") {
         const int nrIterations = configuration[name]["nrIterations"];
@@ -223,11 +230,13 @@ void getFigure(const ini::Configuration &configuration, Figures &figures, const 
                 Figures::mengerSponge(nrIterations) * scaleFigure(scale) * rotateX(x) * rotateY(y) * rotateZ(z) *
                 translate(center);
         temp.setColor(ambient, diffuse, specular, coefficient);
+        temp.setTexture(texture, p, a, b);
         figures += std::move(temp);
     }
     if (!figure.getPoints().empty()) {
         figure *= scaleFigure(scale) * rotateX(x) * rotateY(y) * rotateZ(z) * translate(center);
         figure.setColor(ambient, diffuse, specular, coefficient);
+        figure.setTexture(texture, p, a, b);
         figures.addFigure(std::move(figure));
     }
 }
@@ -239,6 +248,8 @@ img::EasyImage draw3D(const ini::Configuration &configuration, const render type
     const int nrLights = configuration["General"]["nrLights"].as_int_or_default(0);
     const std::vector<double> eyeP = configuration["General"]["eye"];
     const Matrix eye = eyePoint(Vector3D::point(eyeP));
+    const bool shadowEnabled = configuration["General"]["shadowEnabled"].as_bool_or_default(false);
+    const int shadowMask = configuration["General"]["shadowMask"].as_int_or_default(0);
 
     Figures figures;
     for (int i = nrFigures - 1; i >= 0; --i) {
@@ -259,11 +270,25 @@ img::EasyImage draw3D(const ini::Configuration &configuration, const render type
         } else {
             ambient = configuration[name]["color"];
         }
-        getFigure(configuration, figures, name, ambient, diffuse, specular, coefficient);
+
+        std::vector<double> p = {0, 0, 0};
+        std::vector<double> a = {0, 0, 0};
+        std::vector<double> b = {0, 0, 0};
+        std::string texture;
+        const bool textured = configuration[name]["texture"].exists();
+        if (textured) {
+            p = configuration[name]["p"];
+            a = configuration[name]["a"];
+            b = configuration[name]["b"];
+            texture = configuration[name]["texture"].as_string_or_default("");
+        }
+
+        getFigure(configuration, figures, name, ambient, diffuse, specular, coefficient, texture, Vector3D::point(p),
+                  Vector3D::vector(a), Vector3D::vector(b));
     }
 
-    PointLights point;
-    InfLights inf;
+    PointLights points;
+    InfLights infs;
     if (type == lighted) {
         for (int i = 0; i < nrLights; ++i) {
             const std::string name = "Light" + std::to_string(i);
@@ -277,29 +302,47 @@ img::EasyImage draw3D(const ini::Configuration &configuration, const render type
             if (infinity) {
                 std::vector<double> direction = {1, 1, 1};
                 if (configuration[name]["direction"].exists()) direction = configuration[name]["direction"];
-                inf.emplace_back(ambient, diffuse, specular, Vector3D::vector(direction));
+                infs.emplace_back(ambient, diffuse, specular, Vector3D::vector(direction));
             } else {
                 std::vector<double> location = {0, 0, 0};
                 if (configuration[name]["location"].exists()) location = configuration[name]["location"];
-                point.emplace_back(ambient, diffuse, specular, Vector3D::point(location));
+                points.emplace_back(ambient, diffuse, specular, Vector3D::point(location));
             }
         }
     } else {
-        inf.emplace_back(Color(1, 1, 1), Color(), Color(), Vector3D::vector(1, 1, 1));
+        infs.emplace_back(Color(1, 1, 1), Color(), Color(), Vector3D::vector(1, 1, 1));
     }
 
-    figures *= eye;
-    point *= eye;
-    inf *= eye;
+
+//    img::EasyImage a(points[0].shadowMask.size(), points[0].shadowMask[0].size());
+//    for (int x = 0; x < points[0].shadowMask.size(); ++x) {
+//        for (int y = 0; y < points[0].shadowMask[0].size(); ++y) {
+//            auto c = (1+points[0].shadowMask[x][y]);
+//
+//            a(x, y) = Color(c, c, c);
+//            if (!std::isinf(c)) {
+//                std::cout << "";
+//            }
+//        }
+//    }
+//    return a;
+
+
     if (type == wire) {
+        figures *= eye;
         Lines2D lines = figures;
         return lines.draw((unsigned int) size, background, false);
     } else if (type == zbuf) {
+        figures *= eye;
         Lines2D lines = figures;
         return lines.draw((unsigned int) size, background, true);
     } else if (type == triangle or type == lighted) {
         figures.triangulate();
-        return figures.draw((unsigned int) size, background, point, inf);
+        if (shadowEnabled) figures.generateShadowMasks(points, shadowMask);
+        figures *= eye;
+        points *= eye;
+        infs *= eye;
+        return figures.draw((unsigned int) size, background, points, infs, eye, shadowEnabled);
     }
     return img::EasyImage();
 }

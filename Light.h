@@ -9,21 +9,26 @@
 #ifndef ENGINE_CMAKE_LIGHT_H
 #define ENGINE_CMAKE_LIGHT_H
 
+#include <cfloat>
+#include <algorithm>
 #include "Color.h"
 
 struct PointLight {
     Color ambient;
     Color diffuse;
     Color specular;
-    Vector3D point;
+    Vector3D location;
+    ZBuffer shadowMask;
+    Matrix eye;
+    double d, dx, dy;
 
-    PointLight(const Color &ambient, const Color &diffuse, const Color &specular, const Vector3D &point) : ambient(
-            ambient), diffuse(diffuse), specular(specular), point(point) {};
+    PointLight(const Color &ambient, const Color &diffuse, const Color &specular, const Vector3D &location) : ambient(
+            ambient), diffuse(diffuse), specular(specular), location(location) {};
 
     PointLight &operator*=(const Matrix &matrix) {
-        point *= matrix;
+        location *= matrix;
         return *this;
-    }
+    };
 };
 
 struct InfLight {
@@ -38,24 +43,25 @@ struct InfLight {
     InfLight &operator*=(const Matrix &matrix) {
         direction *= matrix;
         return *this;
-    }
+    };
 };
 
-struct PointLights: public std::vector<PointLight> {
-    PointLights &operator*=(const Matrix &matrix){
+struct PointLights : public std::vector<PointLight> {
+    PointLights &operator*=(const Matrix &matrix) {
         for (auto &light: *this) {
             light *= matrix;
         }
         return *this;
-    }
+    };
 };
-struct InfLights: public std::vector<InfLight> {
-    InfLights &operator*=(const Matrix &matrix){
+
+struct InfLights : public std::vector<InfLight> {
+    InfLights &operator*=(const Matrix &matrix) {
         for (auto &light: *this) {
             light *= matrix;
         }
         return *this;
-    }
+    };
 };
 
 #endif //ENGINE_CMAKE_LIGHT_H
