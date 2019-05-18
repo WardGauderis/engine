@@ -130,16 +130,7 @@ void getFigure(const ini::Configuration &configuration, Figures &figures, const 
     Figure figure;
 
     if (figureType == "LineDrawing") {
-        int nrPoints = configuration[name]["nrPoints"];
-        int nrLines = configuration[name]["nrLines"];
-        for (int j = 0; j < nrPoints; ++j) {
-            std::vector<double> point = configuration[name]["point" + std::to_string(j)];
-            figure.addPoint(Vector3D::point(point));
-        }
-        for (int k = 0; k < nrLines; ++k) {
-            std::vector<int> line = configuration[name]["line" + std::to_string(k)];
-            figure.addFace(line);
-        }
+        figure = Figure(name, configuration);
     } else if (figureType == "Cube") {
         figure = Figure::cube();
     } else if (figureType == "Tetrahedron") {
@@ -155,7 +146,7 @@ void getFigure(const ini::Configuration &configuration, Figures &figures, const 
     } else if (figureType == "Cylinder") {
         const int n = configuration[name]["n"];
         const double height = configuration[name]["height"];
-        figure = Figure::cylinder(n, height);
+        figure = Figure::cylinder(n, height, true);
     } else if (figureType == "Cone") {
         const int n = configuration[name]["n"];
         const double height = configuration[name]["height"];
@@ -232,7 +223,85 @@ void getFigure(const ini::Configuration &configuration, Figures &figures, const 
         temp.setColor(ambient, diffuse, specular, coefficient);
         temp.setTexture(texture, p, a, b);
         figures += std::move(temp);
+    } else if (figureType == "ThickLineDrawing") {
+        const double r = configuration[name]["radius"];
+        const int n = configuration[name]["n"];
+        const int m = configuration[name]["m"];
+        Figure temp = Figure(name, configuration);
+        temp *= scaleFigure(scale) * rotateX(x) * rotateY(y) * rotateZ(z) * translate(center);
+        temp.setColor(ambient, diffuse, specular, coefficient);
+        temp.setTexture(texture, p, a, b);
+        figures += Figures(temp, r, n, m);
+    } else if (figureType == "ThickCube") {
+        const double r = configuration[name]["radius"];
+        const int n = configuration[name]["n"];
+        const int m = configuration[name]["m"];
+        Figure temp = Figure::cube();
+        temp *= rotateX(x) * rotateY(y) * rotateZ(z) * translate(center);
+        temp.setColor(ambient, diffuse, specular, coefficient);
+        temp.setTexture(texture, p, a, b);
+        figures += Figures(temp, r, n, m) * scaleFigure(scale);
+    } else if (figureType == "ThickDodecahedron") {
+        const double r = configuration[name]["radius"];
+        const int n = configuration[name]["n"];
+        const int m = configuration[name]["m"];
+        Figure temp = Figure::dodecahedron();
+        temp *= rotateX(x) * rotateY(y) * rotateZ(z) * translate(center);
+        temp.setColor(ambient, diffuse, specular, coefficient);
+        temp.setTexture(texture, p, a, b);
+        figures += Figures(temp, r, n, m) * scaleFigure(scale);
+    } else if (figureType == "ThickIcosahedron") {
+        const double r = configuration[name]["radius"];
+        const int n = configuration[name]["n"];
+        const int m = configuration[name]["m"];
+        Figure temp = Figure::icosahedron();
+        temp *= rotateX(x) * rotateY(y) * rotateZ(z) * translate(center);
+        temp.setColor(ambient, diffuse, specular, coefficient);
+        temp.setTexture(texture, p, a, b);
+        figures += Figures(temp, r, n, m) * scaleFigure(scale);
+    } else if (figureType == "ThickOctahedron") {
+        const double r = configuration[name]["radius"];
+        const int n = configuration[name]["n"];
+        const int m = configuration[name]["m"];
+        Figure temp = Figure::octahedron();
+        temp *= rotateX(x) * rotateY(y) * rotateZ(z) * translate(center);
+        temp.setColor(ambient, diffuse, specular, coefficient);
+        temp.setTexture(texture, p, a, b);
+        figures += Figures(temp, r, n, m) * scaleFigure(scale);
+    } else if (figureType == "ThickTetrahedron") {
+        const double r = configuration[name]["radius"];
+        const int n = configuration[name]["n"];
+        const int m = configuration[name]["m"];
+        Figure temp = Figure::tetrahedron();
+        temp *= rotateX(x) * rotateY(y) * rotateZ(z) * translate(center);
+        temp.setColor(ambient, diffuse, specular, coefficient);
+        temp.setTexture(texture, p, a, b);
+        figures += Figures(temp, r, n, m) * scaleFigure(scale);
+    } else if (figureType == "Thick3DLSystem") {
+        const double r = configuration[name]["radius"];
+        const int n = configuration[name]["n"];
+        const int m = configuration[name]["m"];
+        const std::string inputfile = configuration[name]["inputfile"];
+        LParser::LSystem3D lSystem3D;
+        std::ifstream inputStream(inputfile);
+        inputStream >> lSystem3D;
+        inputStream.close();
+        Figure temp = lSystem3D;
+        temp *= rotateX(x) * rotateY(y) * rotateZ(z) * translate(center);
+        temp.setColor(ambient, diffuse, specular, coefficient);
+        temp.setTexture(texture, p, a, b);
+        figures += Figures(temp, r, n, m) * scaleFigure(scale);
+    } else if (figureType == "ThickBuckyBall") {
+        const double r = configuration[name]["radius"];
+        const int n = configuration[name]["n"];
+        const int m = configuration[name]["m"];
+        Figure temp = Figure::buckyball();
+        temp *= rotateX(x) * rotateY(y) * rotateZ(z) * translate(center);
+        temp.setColor(ambient, diffuse, specular, coefficient);
+        temp.setTexture(texture, p, a, b);
+        figures += Figures(temp, r, n, m) * scaleFigure(scale);
     }
+
     if (!figure.getPoints().empty()) {
         figure *= scaleFigure(scale) * rotateX(x) * rotateY(y) * rotateZ(z) * translate(center);
         figure.setColor(ambient, diffuse, specular, coefficient);

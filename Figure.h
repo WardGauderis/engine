@@ -14,6 +14,8 @@
 #include <stack>
 #include "easy_image.h"
 
+void toPolar(const Vector3D &point, double &theta, double &phi, double &r);
+
 Matrix scaleFigure(double scale);
 
 Matrix rotateX(double angle);
@@ -55,6 +57,12 @@ class Figure {
     static void sort(std::vector<Face *> &faces, int index);
 
 public:
+    void setTexture(const Figure &figure);
+
+    void setColor(const Figure &figure);
+
+    Figure(const std::string& name, const ini::Configuration &configuration);
+
     const std::string &getTexture() const;
 
     const Vector3D &getP() const;
@@ -103,7 +111,7 @@ public:
 
     static Figure dodecahedron();
 
-    static Figure cylinder(int n, double height);
+    static Figure cylinder(int n, double height, bool faces);
 
     static Figure cone(int n, double height);
 
@@ -132,6 +140,8 @@ class Figures {
 
     static void mengerRec(Figures &figs, const int iter, const double scale, const Vector3D &corner);
 
+    void addCilinder(const Vector3D &begin, const Vector3D &end, int n, double radius, const Figure &fig);
+
 public:
     void setTexture(const std::string &tex, const Vector3D &pos, const Vector3D &x, const Vector3D &y);
 
@@ -156,6 +166,10 @@ public:
          bool shadows) const;
 
     static Figures fractal(Figure &figure, int iter, double scale);
+
+    Figures(const Figure &fig, double r, int n, int m);
+
+    Figures();
 
     static void fractalRec(Figures &figs, const Figure &fig, int iter, double scale);
 

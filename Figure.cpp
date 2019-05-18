@@ -58,10 +58,15 @@ Matrix translate(const Vector3D &vector) {
     return translator;
 }
 
+void toPolar(const Vector3D &point, double &theta, double &phi, double &r) {
+    r = point.length();
+    phi = acos(point.z / r);
+    theta = atan2(point.y, point.x);
+}
+
 Matrix eyePoint(const Vector3D &eyepoint) {
-    double r = sqrt(pow(eyepoint.x, 2) + pow(eyepoint.y, 2) + pow(eyepoint.z, 2));
-    double phi = acos(eyepoint.z / r);
-    double theta = atan2(eyepoint.y, eyepoint.x);
+    double r, phi, theta;
+    toPolar(eyepoint, theta, phi, r);
     auto trans = Vector3D::point(0, 0, -r);
     Matrix eye = rotateZ((-M_PI / 2) - theta) * rotateX(-phi) * translate(trans);
 //	Matrix eye;
@@ -257,7 +262,7 @@ Figure Figure::dodecahedron() {
     return figure;
 }
 
-Figure Figure::cylinder(const int n, const double height) {
+Figure Figure::cylinder(const int n, const double height, const bool faces) {
     Figure figure;
     figure.points.reserve(2 * n);
     for (int i = 0; i < n; ++i) {
@@ -270,16 +275,18 @@ Figure Figure::cylinder(const int n, const double height) {
     for (int j = 0; j < n; ++j) {
         figure.addFace({j, (j + 1) % n, ((j + 1) % n) + n, j + n});
     }
+    if (!faces)
+        return figure;
     std::vector<int> points1;
     points1.reserve(n);
     for (int k = 0; k < n; ++k) {
-        points1.push_back(n - 1 - k);
+        points1.emplace_back(n - 1 - k);
     }
     figure.addFace(points1);
     std::vector<int> points2;
     points2.reserve(n);
     for (int k = n - 1; k >= 0; --k) {
-        points2.push_back(2 * n - 1 - k);
+        points2.emplace_back(2 * n - 1 - k);
     }
     figure.addFace(points2);
     return figure;
@@ -533,6 +540,32 @@ const Vector3D &Figure::getB() const {
     return b;
 }
 
+Figure::Figure(const std::string &name, const ini::Configuration &configuration) {
+    int nrPoints = configuration[name]["nrPoints"];
+    int nrLines = configuration[name]["nrLines"];
+    for (int j = 0; j < nrPoints; ++j) {
+        std::vector<double> point = configuration[name]["point" + std::to_string(j)];
+        addPoint(Vector3D::point(point));
+    }
+    for (int k = 0; k < nrLines; ++k) {
+        std::vector<int> line = configuration[name]["line" + std::to_string(k)];
+        addFace(line);
+    }
+}
+
+void Figure::setTexture(const Figure &figure) {
+    texture = figure.texture;
+    p = figure.p;
+    a = figure.a;
+    b = figure.b;
+}
+
+void Figure::setColor(const Figure &figure) {
+    ambient = figure.ambient;
+    diffuse = figure.diffuse;
+    specular = figure.specular;
+    reflectionCoefficient = figure.reflectionCoefficient;
+}
 
 ////Figure Figure::mengerSponge(const int iter) {
 ////	Figures menger;
@@ -894,9 +927,43 @@ void Figures::setTexture(const std::string &tex, const Vector3D &pos, const Vect
     }
 }
 
+Figures::Figures(const Figure &fig, double r, int n, int m) {
+    for (const auto &p : fig.getPoints()) {
+        Figure temp = Figure::sphere(m) * scaleFigure(r) * translate(p);
+        temp.setTexture(fig);
+        temp.setColor(fig);
+        addFigure(std::move(temp));
+    }
+    for (const auto &f: fig.getFaces()) {
+        if (f.point_indexes.size() == 2) {
+            const Vector3D begin = fig.getPoints()[f.point_indexes[0]];
+            const Vector3D end = fig.getPoints()[f.point_indexes[1]];
+            addCilinder(begin, end, n, r, fig);
+        } else {
+            for (unsigned int i = 0; i < f.point_indexes.size(); ++i) {
+                Vector3D begin = fig.getPoints()[f.point_indexes[i]];
+                Vector3D end = fig.getPoints()[f.point_indexes[(i + 1) % f.point_indexes.size()]];
+                addCilinder(begin, end, n, r, fig);
+            }
+        }
+    }
+}
 
-Face::Face(
-        const std::initializer_list<int> &point_indexes) : point_indexes(point_indexes) {}
+Figures::Figures() {}
+
+void Figures::addCilinder(const Vector3D &begin, const Vector3D &end, int n, double radius, const Figure &fig) {
+    const Vector3D pr = Vector3D::point(0, 0, 0) + (end - begin);
+    double theta, phi, r;
+    toPolar(pr, theta, phi, r);
+    const double height = r / radius;
+    Figure temp = Figure::cylinder(n, height, false) * scaleFigure(radius) * rotateY(phi) * rotateZ(theta) *
+                  translate(begin);
+    temp.setTexture(fig);
+    temp.setColor(fig);
+    addFigure(std::move(temp));
+}
+
+Face::Face(const std::initializer_list<int> &point_indexes) : point_indexes(point_indexes) {}
 
 Face::Face(std::vector<int>
            point_indexes) : point_indexes(std::move(point_indexes)) {}
