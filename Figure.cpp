@@ -386,50 +386,58 @@ Figure::Figure(const LParser::LSystem3D &lSystem) {
     unsigned int nr = lSystem.get_nr_iterations();
     const double angle = lSystem.get_angle() * M_PI / 180;
     std::stack<std::tuple<Vector3D, Vector3D, Vector3D, Vector3D, int>> brackets;
+    bool changed = true;
     for (const auto &symbol:lSystem.get_initiator()) {
         drawCharacter(nr, start, H, L, U, lSystem, symbol,
-                      brackets, angle, prevPoint);
+                      brackets, angle, prevPoint, changed);
     }
 }
 
 void Figure::drawCharacter(unsigned int nr, Vector3D &start, Vector3D &H, Vector3D &L, Vector3D &U,
                            const LParser::LSystem3D &lSystem, const char character,
                            std::stack<std::tuple<Vector3D, Vector3D, Vector3D, Vector3D, int>> &brackets,
-                           const double angle, int &prevPoint) {
+                           const double angle, int &prevPoint, bool &changed) {
     Vector3D old;
     switch (character) {
         case '+':
             old = H;
             H = H * cos(angle) + L * sin(angle);
             L = -old * sin(angle) + L * cos(angle);
+            changed = true;
             break;
         case '-':
             old = H;
             H = H * cos(-angle) + L * sin(-angle);
             L = -old * sin(-angle) + L * cos(-angle);
+            changed = true;
             break;
         case '^':
             old = H;
             H = H * cos(angle) + U * sin(angle);
             U = -old * sin(angle) + U * cos(angle);
+            changed = true;
             break;
         case '&':
             old = H;
             H = H * cos(-angle) + U * sin(-angle);
             U = -old * sin(-angle) + U * cos(-angle);
+            changed = true;
             break;
         case '\\':
             old = L;
             L = L * cos(angle) - U * sin(angle);
             U = old * sin(angle) + U * cos(angle);
+            changed = true;
             break;
         case '/':
             old = L;
             L = L * cos(-angle) - U * sin(-angle);
             U = old * sin(-angle) + U * cos(-angle);
+            changed = true;
             break;
         case '(':
             brackets.emplace(start, H, L, U, prevPoint);
+            changed = true;
             break;
         case ')':
             start = std::get<0>(brackets.top());
@@ -438,22 +446,29 @@ void Figure::drawCharacter(unsigned int nr, Vector3D &start, Vector3D &H, Vector
             U = std::get<3>(brackets.top());
             prevPoint = std::get<4>(brackets.top());
             brackets.pop();
+            changed = true;
             break;
         case '|':
             H = -H;
             L = -L;
+            changed = true;
             break;
         default:
             if (nr == 0) {
                 start += H;
-                addPoint(start);
-                if (lSystem.draw(character)) {
-                    addFace({prevPoint, static_cast<int>(getPoints().size() - 1)});
+                if (changed) {
+                    addPoint(start);
+                    if (lSystem.draw(character)) {
+                        addFace({prevPoint, static_cast<int>(getPoints().size() - 1)});
+                    }
+                    prevPoint = static_cast<int>(getPoints().size() - 1);
+                    changed = false;
+                } else {
+                    points[prevPoint] = start;
                 }
-                prevPoint = static_cast<int>(getPoints().size() - 1);
             } else {
                 for (const auto &symbol:lSystem.get_replacement(character)) {
-                    drawCharacter(nr - 1, start, H, L, U, lSystem, symbol, brackets, angle, prevPoint);
+                    drawCharacter(nr - 1, start, H, L, U, lSystem, symbol, brackets, angle, prevPoint, changed);
                 }
             }
             break;
@@ -928,22 +943,35 @@ void Figures::setTexture(const std::string &tex, const Vector3D &pos, const Vect
 }
 
 Figures::Figures(const Figure &fig, double r, int n, int m) {
-    for (const auto &p : fig.getPoints()) {
-        Figure temp = Figure::sphere(m) * scaleFigure(r) * translate(p);
-        temp.setTexture(fig);
-        temp.setColor(fig);
-        addFigure(std::move(temp));
-    }
+    std::vector<bool> usedPoints(fig.getPoints().size(), false);
+    std::set<std::pair<int, int>> usedEdges;
     for (const auto &f: fig.getFaces()) {
         if (f.point_indexes.size() == 2) {
             const Vector3D begin = fig.getPoints()[f.point_indexes[0]];
             const Vector3D end = fig.getPoints()[f.point_indexes[1]];
+            bool used = !usedEdges.insert({std::min(f.point_indexes[0], f.point_indexes[1]),
+                                           std::max(f.point_indexes[0], f.point_indexes[1])}).second;
+            if (used) continue;
             addCilinder(begin, end, n, r, fig);
         } else {
             for (unsigned int i = 0; i < f.point_indexes.size(); ++i) {
                 Vector3D begin = fig.getPoints()[f.point_indexes[i]];
                 Vector3D end = fig.getPoints()[f.point_indexes[(i + 1) % f.point_indexes.size()]];
+                bool used = !usedEdges.insert(
+                        {std::min(f.point_indexes[i], f.point_indexes[(i + 1) % f.point_indexes.size()]),
+                         std::max(f.point_indexes[i], f.point_indexes[(i + 1) % f.point_indexes.size()])}).second;
+                if (used) continue;
                 addCilinder(begin, end, n, r, fig);
+            }
+        }
+        for (const auto &i: f.point_indexes) {
+            if (!usedPoints[i]) {
+                usedPoints[i] = true;
+                auto p = fig.getPoints()[i];
+                Figure temp = Figure::sphere(m) * scaleFigure(r) * translate(p);
+                temp.setTexture(fig);
+                temp.setColor(fig);
+                addFigure(std::move(temp));
             }
         }
     }

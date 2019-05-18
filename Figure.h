@@ -130,9 +130,9 @@ public:
 //	explicit Figure(Figures& figures, bool removeDoubleFaces);
 
     void drawCharacter(unsigned int nr, Vector3D &start, Vector3D &H, Vector3D &L, Vector3D &U,
-                       const LParser::LSystem3D &lSystem, char character,
-                       std::stack<std::tuple<Vector3D, Vector3D, Vector3D, Vector3D, int>> &brackets, double angle,
-                       int &prevPoint);
+                       const LParser::LSystem3D &lSystem, const char character,
+                       std::stack<std::tuple<Vector3D, Vector3D, Vector3D, Vector3D, int>> &brackets,
+                       const double angle, int &prevPoint, bool &changed);
 };
 
 class Figures {
