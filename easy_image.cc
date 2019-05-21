@@ -638,7 +638,7 @@ void img::EasyImage::draw_textured_triangle(ZBuffer &zBuffer, const Vector3D &a,
                         const double zE = (1 - alphaX) * zA + alphaX * zB;
                         const double zF = (1 - alphaX) * zC + alphaX * zD;
                         const double zMask = alphaY * zE + (1 - alphaY) * zF;
-                        noShadow = abs(zMask - 1 / shadow.z) < pow(10, -5);
+                        noShadow = std::abs(zMask - 1.0 / shadow.z) < pow(10, -5);
                     }
                     if (noShadow) {
                         Vector3D l = light.location - real;
