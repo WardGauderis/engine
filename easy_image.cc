@@ -420,6 +420,8 @@ img::EasyImage::draw_triangle(ZBuffer &zBuffer, const Vector3D &a, const Vector3
                               const PointLights &points, const InfLights &infs, const ::Color &totalAmbient,
                               const Matrix &eye,
                               const bool shadows) {
+    if ((b.x - a.x) * (c.y - a.y) - (c.x - a.x) * (b.y - a.y) < 0)  //backface culling
+        return;
     struct point {
         double x;
         double y;
@@ -532,6 +534,8 @@ void img::EasyImage::draw_textured_triangle(ZBuffer &zBuffer, const Vector3D &a,
                                             const InfLights &infs, const ::Color &totalAmbient, const Matrix &eye,
                                             const bool shadows, const Vector3D &pTex, const Vector3D &aTex,
                                             const Vector3D &bTex) {
+    if ((b.x - a.x) * (c.y - a.y) - (c.x - a.x) * (b.y - a.y) < 0)  //backface culling
+        return;
     struct point {
         double x;
         double y;

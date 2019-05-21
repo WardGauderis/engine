@@ -887,6 +887,10 @@ void Figures::generateShadowMasks(PointLights &points, const unsigned int size) 
                 const auto a = figure.getPoints()[triangle.point_indexes[0]];
                 const auto b = figure.getPoints()[triangle.point_indexes[1]];
                 const auto c = figure.getPoints()[triangle.point_indexes[2]];
+
+//                if ((b.x - a.x) * (c.y - a.y) - (c.x - a.x) * (b.y - a.y) < 0)  //backface culling werkt bij sommige figuren (torussen) niet voor de shadowmap
+//                    continue;
+
                 struct point {
                     double x;
                     double y;
