@@ -382,21 +382,6 @@ img::EasyImage draw3D(const ini::Configuration &configuration, const render type
         infs.emplace_back(Color(1, 1, 1), Color(), Color(), Vector3D::vector(1, 1, 1));
     }
 
-
-//    img::EasyImage a(points[0].shadowMask.size(), points[0].shadowMask[0].size());
-//    for (int x = 0; x < points[0].shadowMask.size(); ++x) {
-//        for (int y = 0; y < points[0].shadowMask[0].size(); ++y) {
-//            auto c = (1+points[0].shadowMask[x][y]);
-//
-//            a(x, y) = Color(c, c, c);
-//            if (!std::isinf(c)) {
-//                std::cout << "";
-//            }
-//        }
-//    }
-//    return a;
-
-
     if (type == wire) {
         figures *= eye;
         Lines2D lines = figures;

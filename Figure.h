@@ -61,7 +61,7 @@ public:
 
     void setColor(const Figure &figure);
 
-    Figure(const std::string& name, const ini::Configuration &configuration);
+    Figure(const std::string &name, const ini::Configuration &configuration);
 
     const std::string &getTexture() const;
 
@@ -119,26 +119,22 @@ public:
 
     static Figure Torus(double R, double r, int n, int m);
 
-//	static Figure mengerSponge(int iter);
-
     Figure(const LParser::LSystem3D &lSystem);
 
     void triangulate();
 
     Figure();
 
-//	explicit Figure(Figures& figures, bool removeDoubleFaces);
-
     void drawCharacter(unsigned int nr, Vector3D &start, Vector3D &H, Vector3D &L, Vector3D &U,
-                       const LParser::LSystem3D &lSystem, const char character,
+                       const LParser::LSystem3D &lSystem, char character,
                        std::stack<std::tuple<Vector3D, Vector3D, Vector3D, Vector3D, int>> &brackets,
-                       const double angle, int &prevPoint, bool &changed);
+                       double angle, int &prevPoint, bool &changed);
 };
 
 class Figures {
     std::forward_list<Figure> figures;
 
-    static void mengerRec(Figures &figs, const int iter, const double scale, const Vector3D &corner);
+    static void mengerRec(Figures &figs, int iter, double scale, const Vector3D &corner);
 
     void addCilinder(const Vector3D &begin, const Vector3D &end, int n, double radius, const Figure &fig);
 
@@ -176,8 +172,6 @@ public:
     static Figures mengerSponge(int iter);
 
     void generateShadowMasks(PointLights &points, unsigned int size);
-
-//	friend Figure::Figure(Figures& figures, bool removeDoubleFaces);
 };
 
 #endif //ENGINE_CMAKE_FIGURE_H
