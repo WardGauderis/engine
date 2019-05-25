@@ -15,7 +15,8 @@ functionaliteit:
 - 3D lijntekeningen met bollen en cilinders
 
 extra/voorbeelden:
-- stochastic L-systemen in 2D en 3D: zie voorbeelden in "tests"\\
+- stochastic L-systemen in 2D en 3D: zie voorbeelden in "tests"
+
   alle regels die een kans maken, worden voorafgegaan door hun kans in de L2D/L3D file
 - Klasse Lines2D verwijderdt dubbele lijnen automatisch (d.m.v. een set) wanneer 3d-figuren wordt omgezet
 - repeterende textures op willekeurige oppervlakken met interpolatie: zie voorbeelden in de folder "tests"
