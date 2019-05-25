@@ -231,7 +231,6 @@ Figure Figure::buckyball() {
         pentagons.emplace_back(newPent);
     }
     ico.points = newPoints;
-//	ico.faces.insert(ico.faces.end(), pentagons.begin(), pentagons.end());
     ico.faces.reserve(pentagons.size());
     std::move(pentagons.begin(), pentagons.end(), std::back_inserter(ico.faces));
     return ico;
@@ -488,7 +487,7 @@ Figure Figure::operator*(const Matrix &matrix) const {
     return fig;
 }
 
-void Figure::sort(std::vector<Face *> &faces, int index) {
+void Figure::sort(std::vector<Face *> &faces, int index) {  //wordt gebruikt om een buckyball te generen uit een icosahedron
     for (unsigned int face = 0; face < faces.size() - 2; ++face) {
         unsigned int point = 0;
         while (point + 1 < faces[face]->point_indexes.size() && faces[face]->point_indexes[point + 1] != index) point++;
@@ -505,11 +504,11 @@ void Figure::sort(std::vector<Face *> &faces, int index) {
     }
 }
 
-void Figure::setColor(const Color &a, const Color &d, const Color &s, const double r) {
-    ambient = a;
-    diffuse = d;
-    specular = s;
-    reflectionCoefficient = r;
+void Figure::setColor(const Color &am, const Color &di, const Color &sp, const double re) {
+    ambient = am;
+    diffuse = di;
+    specular = sp;
+    reflectionCoefficient = re;
 }
 
 const Color &Figure::getAmbient() const {
@@ -536,7 +535,7 @@ void Figure::setTexture(const std::string &tex, const Vector3D &pos, const Vecto
 }
 
 bool Figure::isTextured() const {
-    return texture != "";
+    return !texture.empty();
 }
 
 const std::string &Figure::getTexture() const {
@@ -581,109 +580,6 @@ void Figure::setColor(const Figure &figure) {
     specular = figure.specular;
     reflectionCoefficient = figure.reflectionCoefficient;
 }
-
-////Figure Figure::mengerSponge(const int iter) {
-////	Figures menger;
-////	menger.addFigure(Figure::cube() * rotateX(1) * rotateY(1));
-////	double scale = 1;
-////	for (int i = 0; i < iter; ++i) {
-////		Figures newMenger;
-////		for (const auto &cube: menger.getFigures()) {
-////			Figure newCube = cube * scaleFigure(1.0/3);
-////			std::vector<Vector3D> points = {
-////					cube.getPoints()[5] + Vector3D::vector(0, 0, 0),
-////					cube.getPoints()[5] + Vector3D::vector(scale, 0, 0),
-////					cube.getPoints()[5] + Vector3D::vector(2 * scale, 0, 0),
-////					cube.getPoints()[5] + Vector3D::vector(0, scale, 0),
-////					cube.getPoints()[5] + Vector3D::vector(2 * scale, scale, 0),
-////					cube.getPoints()[5] + Vector3D::vector(0, 2 * scale, 0),
-////					cube.getPoints()[5] + Vector3D::vector(scale, 2 * scale, 0),
-////					cube.getPoints()[5] + Vector3D::vector(2 * scale, 2 * scale, 0),
-////
-////					cube.getPoints()[5] + Vector3D::vector(0, 0, scale),
-////					cube.getPoints()[5] + Vector3D::vector(2 * scale, 0, scale),
-////					cube.getPoints()[5] + Vector3D::vector(0, 2 * scale, scale),
-////					cube.getPoints()[5] + Vector3D::vector(2 * scale, 2 * scale, scale),
-////
-////					cube.getPoints()[5] + Vector3D::vector(0, 0, 2 * scale),
-////					cube.getPoints()[5] + Vector3D::vector(scale, 0, 2 * scale),
-////					cube.getPoints()[5] + Vector3D::vector(2 * scale, 0, 2 * scale),
-////					cube.getPoints()[5] + Vector3D::vector(0, scale, 2*scale),
-////					cube.getPoints()[5] + Vector3D::vector(2 * scale, scale, 2*scale),
-////					cube.getPoints()[5] + Vector3D::vector(0, 2 * scale, 2*scale),
-////					cube.getPoints()[5] + Vector3D::vector(scale, 2 * scale, 2*scale),
-////					cube.getPoints()[5] + Vector3D::vector(2 * scale, 2 * scale, 2*scale),
-////			};
-////			for (const auto &point: points) {
-////				newMenger.addFigure(newCube * translate(cube.getPoints()[5] - point));
-////			}
-////		}
-////		menger = std::move(newMenger);
-////		scale /= 3;
-////	}
-////	Figure mengerSimple = Figure(menger, false);
-////	int i = mengerSimple.faces.size();
-////	return mengerSimple;
-////}
-//
-//Figure::Figure(Figures &figures, bool removeDoubleFaces) {
-//	for (auto &figure: figures.figures) {
-//		faces.reserve(figure.faces.size());
-//		for (auto &face: figure.faces) {
-//			for (auto &index: face.point_indexes) {
-//				index += points.size();
-//			}
-//			faces.push_back(std::move(face));
-//		}
-//		points.reserve(figure.points.size());
-//		std::move(figure.points.begin(), figure.points.end(), std::back_inserter(points));
-//	}
-//	if (removeDoubleFaces) {
-//		Vector3D toFind;
-//		auto compare = [&toFind](const Vector3D &a) {
-//			return (a.x == toFind.x) && (a.y == toFind.y) && (a.z == toFind.z);
-//		};
-//		for (int i = 0; i < points.size(); i++) {
-//			if (points[i].x != NAN) {
-//				toFind = points[i];
-//				auto it = std::find_if(points.begin() + i + 1, points.end(), compare);
-//				while (it != points.end()) {
-//					*it = Vector3D::point({NAN, NAN, NAN});
-//					int pos = it - points.begin();
-//					for (auto &face: faces) {
-//						auto it2 = find(face.point_indexes.begin(), face.point_indexes.end(), pos);
-//						if (it2 != face.point_indexes.end()) {
-//							*it2 = i;
-//						}
-//					}
-//					it = std::find_if(it + 1, points.end(), compare);
-//				}
-//			}
-//		}
-//		for (auto it = faces.begin(), next = it; it != faces.end(); it = next) {
-//			next++;
-//			bool erased = false;
-//			for (auto it2 = it + 1, next2 = it2; it2 != faces.end(); it2 = next2) {
-//				next2++;
-//				int count = 0;
-//				for (auto &point: (*it).point_indexes) {
-//					if (std::find((*it2).point_indexes.begin(), (*it2).point_indexes.end(), point) !=
-//						(*it2).point_indexes.end()) {
-//						count++;
-//					}
-//				}
-//				if (count > 2) {
-//					next2 = faces.erase(it2);
-//					erased = true;
-//				}
-//			}
-//			if (erased) {
-//				next = faces.erase(it);
-//			}
-//		}
-//	}
-//	color = figures.getFigures().front().getColor();
-//}
 
 img::EasyImage Figures::draw(unsigned int size, const Color &background, const PointLights &point, const InfLights &inf,
                              const Matrix &eye, const bool shadows) const {
@@ -772,17 +668,6 @@ void Figures::fractalRec(Figures &figs, const Figure &fig, const int iter, doubl
 Figures Figures::fractal(Figure &figure, const int iter, const double scale) {
     Figures figs;
     fractalRec(figs, figure, iter, scale);
-//	figs.addFigure(std::move(figure));
-//	for (int i = 0; i < iter; i++) {
-//		std::forward_list<Figure> newIt;
-//		for (auto &fig : figs.figures) {
-//			Figure temp = fig * scaleFigure(1 / scale);
-//			for (int j = 0; j < fig.getPoints().size(); j++) {
-//				newIt.emplace_front(temp * translate(fig.getPoints()[j] - temp.getPoints()[j]));
-//			}
-//		}
-//		figs.figures = std::move(newIt);
-//	}
     return figs;
 }
 
@@ -946,7 +831,7 @@ void Figures::setTexture(const std::string &tex, const Vector3D &pos, const Vect
     }
 }
 
-Figures::Figures(const Figure &fig, double r, int n, int m) {
+Figures::Figures(const Figure &fig, double r, int n, int m) {   //thick figures
     std::vector<bool> usedPoints(fig.getPoints().size(), false);
     std::set<std::pair<int, int>> usedEdges;
     for (const auto &f: fig.getFaces()) {
@@ -981,7 +866,7 @@ Figures::Figures(const Figure &fig, double r, int n, int m) {
     }
 }
 
-Figures::Figures() {}
+Figures::Figures() = default;
 
 void Figures::addCilinder(const Vector3D &begin, const Vector3D &end, int n, double radius, const Figure &fig) {
     const Vector3D pr = Vector3D::point(0, 0, 0) + (end - begin);

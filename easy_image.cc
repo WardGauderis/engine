@@ -422,14 +422,17 @@ img::EasyImage::draw_triangle(ZBuffer &zBuffer, const Vector3D &a, const Vector3
                               const bool shadows) {
     if ((b.x - a.x) * (c.y - a.y) - (c.x - a.x) * (b.y - a.y) < 0)  //backface culling
         return;
+
     struct point {
         double x;
         double y;
     } const A{(d * a.x / -a.z) + dx, (d * a.y / -a.z) + dy}, B{(d * b.x / -b.z) + dx, (d * b.y / -b.z) + dy}, C{
             (d * c.x / -c.z) + dx, (d * c.y / -c.z) + dy};
+
     assert(A.x < this->width && A.y < this->height);
     assert(B.x < this->width && B.y < this->height);
     assert(C.x < this->width && C.y < this->height);
+
     const unsigned int ymin = static_cast<int>(round(std::min(std::min(A.y, B.y), C.y) + 0.5));
     const unsigned int ymax = static_cast<int>(round(std::max(std::max(A.y, B.y), C.y) - 0.5));
     const double xg = (A.x + B.x + C.x) / 3;
@@ -474,6 +477,7 @@ img::EasyImage::draw_triangle(ZBuffer &zBuffer, const Vector3D &a, const Vector3
         }
         const unsigned int xl = static_cast<int>(round(*std::min_element(xL.begin(), xL.end()) + 0.5));
         const unsigned int xr = static_cast<int>(round(*std::max_element(xR.begin(), xR.end()) - 0.5));
+
         for (unsigned int x = xl; x <= xr; x++) {
             const double z = z2 + (x - xg) * dzdx;
             if (z <= zBuffer[x][y]) {
@@ -536,14 +540,17 @@ void img::EasyImage::draw_textured_triangle(ZBuffer &zBuffer, const Vector3D &a,
                                             const Vector3D &bTex) {
     if ((b.x - a.x) * (c.y - a.y) - (c.x - a.x) * (b.y - a.y) < 0)  //backface culling
         return;
+
     struct point {
         double x;
         double y;
     } const A{(d * a.x / -a.z) + dx, (d * a.y / -a.z) + dy}, B{(d * b.x / -b.z) + dx, (d * b.y / -b.z) + dy}, C{
             (d * c.x / -c.z) + dx, (d * c.y / -c.z) + dy};
+
     assert(A.x < this->width && A.y < this->height);
     assert(B.x < this->width && B.y < this->height);
     assert(C.x < this->width && C.y < this->height);
+
     const unsigned int ymin = static_cast<int>(round(std::min(std::min(A.y, B.y), C.y) + 0.5));
     const unsigned int ymax = static_cast<int>(round(std::max(std::max(A.y, B.y), C.y) - 0.5));
     const double xg = (A.x + B.x + C.x) / 3;
@@ -599,6 +606,7 @@ void img::EasyImage::draw_textured_triangle(ZBuffer &zBuffer, const Vector3D &a,
         }
         const unsigned int xl = static_cast<int>(round(*std::min_element(xL.begin(), xL.end()) + 0.5));
         const unsigned int xr = static_cast<int>(round(*std::max_element(xR.begin(), xR.end()) - 0.5));
+
         for (unsigned int x = xl; x <= xr; x++) {
             const double z = z2 + (x - xg) * dzdx;
             if (z <= zBuffer[x][y]) {

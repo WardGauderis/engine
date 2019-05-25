@@ -459,7 +459,7 @@ bool LParser::LSystem::draw(char c) const {
 	return drawfunction.find(c)->second;
 }
 
-const std::string LParser::LSystem::get_replacement(char c) const {
+const std::string LParser::LSystem::get_replacement(char c) const { //stochastische l_systemen
 	assert(get_alphabet().find(c) != get_alphabet().end());
 	std::string in = replacementrules.find(c)->second;
 	if (std::isdigit(in[0])) {

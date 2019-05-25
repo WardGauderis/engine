@@ -10,7 +10,7 @@
 #define ENGINE_CMAKE_COLOR_H
 
 
-struct  Color {
+struct Color {
     double red;
     double green;
     double blue;

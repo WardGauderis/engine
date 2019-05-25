@@ -40,15 +40,13 @@ struct Face {
     Face() = default;
 };
 
-//class Figures;
-
 class Figure {
     std::vector<Vector3D> points;
     std::vector<Face> faces;
     Color ambient;
     Color diffuse;
     Color specular;
-    double reflectionCoefficient;
+    double reflectionCoefficient{};
     std::string texture;
     Vector3D p;
     Vector3D a;

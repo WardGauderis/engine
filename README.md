@@ -19,5 +19,6 @@ extra/voorbeelden:
 - Klasse Lines2D verwijderdt dubbele lijnen automatisch wanneer 3d-figuren wordt omgezet
 - repeterende textures op willekeurige oppervlakken met interpolatie: zie voorbeelden in de folder "tests"
   de kleur van de texture wordt standaard gebruikt voor de ambiente, diffuse en speculaire kleurcomponent
+  (werkt zowel met als zonder schaduw)
 - wanneer thick figures worden gegenereerd, worden enkel de gebruikte edges en punten omgezet in cilinders en bollen (dubbels worden niet gegenereerd)
 - backface culling voor driehoeken
